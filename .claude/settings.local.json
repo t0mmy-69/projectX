@@ -12,7 +12,21 @@
       "Bash(npm run build)",
       "Bash(git init)",
       "Bash(git add .)",
-      "Bash(git commit -m \"Initial commit: NarrativeOS MVP - fully functional dashboard\")"
+      "Bash(git commit -m \"Initial commit: NarrativeOS MVP - fully functional dashboard\")",
+      "Bash(node -e \"console.log\\(require\\(''crypto''\\).randomBytes\\(32\\).toString\\(''hex''\\)\\)\")",
+      "Bash(git remote add origin https://github.com/t0mmy-69/narrativeos.git)",
+      "Bash(git push -u origin main)",
+      "Bash(node --version)",
+      "Bash(npm install --save-dev autoprefixer)",
+      "Bash(git add package.json package-lock.json)",
+      "Bash(git commit -m \"fix: add autoprefixer dependency for Vercel build\")",
+      "Bash(git push)",
+      "Bash(npm install next@latest)",
+      "Bash(node -e \"console.log\\(require\\(''./node_modules/next/package.json''\\).version\\)\")",
+      "Bash(npm install next@15.2.4)",
+      "Bash(node -e \"require\\(''./src/app/api/auth/login/route.ts''\\)\")",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"fix: rewrite middleware for Edge Runtime compatibility + Next.js 15.2.4\")"
     ]
   }
 }
