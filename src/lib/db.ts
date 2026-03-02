@@ -287,8 +287,7 @@ export const memoryDB = global.__narrativeOS_db;
 // Runs at module load time → every serverless instance gets demo data pre-loaded
 // This makes the demo account work reliably on Vercel (stateless serverless)
 (function seedDemoData() {
-  const DEMO_ENABLED = process.env.NODE_ENV !== 'production' || process.env.ENABLE_DEMO_ACCOUNT === 'true';
-  if (!DEMO_ENABLED) return;
+  // Always seed demo data — in-memory DB needs this on every cold start (Vercel serverless)
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require('crypto') as typeof import('crypto');

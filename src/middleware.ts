@@ -21,6 +21,8 @@ const PROTECTED_ROUTES = [
   '/api/auto-reply',
   '/api/scrape',
   '/api/extension',
+  '/api/agents',
+  '/api/agent',
   '/api/user',
   '/api/admin',
   '/api/accounts',
@@ -35,6 +37,7 @@ const PROTECTED_ROUTES = [
   '/draft-studio',
   '/topics',
   '/automation',
+  '/agents',
   '/onboarding',
 ];
 
