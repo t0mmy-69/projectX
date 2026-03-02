@@ -219,3 +219,87 @@ if (!global.__narrativeOS_db) {
 }
 
 export const memoryDB = global.__narrativeOS_db;
+
+// ─── Seed demo data on every cold start ───────────────────────────────────────
+// Runs at module load time → every serverless instance gets demo data pre-loaded
+// This makes the demo account work reliably on Vercel (stateless serverless)
+(function seedDemoData() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const crypto = require('crypto') as typeof import('crypto');
+
+  const DEMO_USER_ID = 'demo_user_001';
+  const DEMO_EMAIL   = 'demo@narrativeos.app';
+  // Fixed salt → deterministic hash → login works across all serverless instances
+  const DEMO_SALT    = 'narrativeos_demo_fixed_salt_v1';
+  const DEMO_HASH    = crypto.pbkdf2Sync('demo1234', DEMO_SALT, 1000, 64, 'sha512').toString('hex');
+  const now          = new Date();
+
+  // Demo user — always set so hash stays consistent
+  memoryDB.users.set(DEMO_USER_ID, {
+    id: DEMO_USER_ID,
+    email: DEMO_EMAIL,
+    name: 'Demo User',
+    password_hash: `${DEMO_SALT}:${DEMO_HASH}`,
+    subscription_tier: 'creator',
+    created_at: now,
+    updated_at: now,
+  } as User & { password_hash: string });
+  memoryDB.usersByEmail.set(DEMO_EMAIL, DEMO_USER_ID);
+
+  // Demo topics
+  ['AI Tech & Agents', 'Solana DeFi', 'SaaS Growth'].forEach((kw, i) => {
+    const id = `demo_topic_${i}`;
+    if (!memoryDB.topics.has(id)) {
+      memoryDB.topics.set(id, {
+        id, user_id: DEMO_USER_ID, keyword: kw,
+        is_active: true, created_at: now, updated_at: now,
+      });
+    }
+  });
+
+  // Demo posts + viral scores + categories
+  const demoPosts = [
+    {
+      author: 'paulg', likes: 12000, reposts: 3400, replies: 1200,
+      category: 'opinion' as PostCategory['category'],
+      content: 'The best startups of the next decade will be built by solo founders with AI as their cofounder.',
+    },
+    {
+      author: 'naval', likes: 8900, reposts: 2100, replies: 560,
+      category: 'opinion' as PostCategory['category'],
+      content: 'Specific knowledge cannot be taught. It can only be learned through genuine curiosity and obsession.',
+    },
+    {
+      author: 'VitalikButerin', likes: 4200, reposts: 890, replies: 340,
+      category: 'narrative_shift' as PostCategory['category'],
+      content: 'The next wave of Layer 2 solutions will focus on ZK-proofs for everything. Privacy is the killer feature.',
+    },
+  ];
+
+  demoPosts.forEach((p, i) => {
+    const postId   = `demo_post_${i}`;
+    if (!memoryDB.posts.has(postId)) {
+      const postedAt = new Date(now.getTime() - (i + 1) * 30 * 60_000);
+      const score    = (p.likes + 2 * p.reposts + p.replies) / 60;
+
+      memoryDB.posts.set(postId, {
+        id: postId, topic_id: 'demo_topic_0',
+        author: p.author, content: p.content,
+        likes: p.likes, reposts: p.reposts, replies: p.replies,
+        posted_at: postedAt, scraped_at: now, created_at: now, updated_at: now,
+      });
+
+      memoryDB.viralScores.set(postId, {
+        id: `vs_${postId}`, post_id: postId,
+        score, engagement_rate: score / 100,
+        calculated_at: now, created_at: now, updated_at: now,
+      });
+
+      memoryDB.categories.set(`cat_${postId}`, {
+        id: `cat_${postId}`, post_id: postId,
+        category: p.category, confidence: 0.9,
+        created_at: now, updated_at: now,
+      });
+    }
+  });
+})();

@@ -26,7 +26,14 @@
       "Bash(npm install next@15.2.4)",
       "Bash(node -e \"require\\(''./src/app/api/auth/login/route.ts''\\)\")",
       "Bash(git add -A)",
-      "Bash(git commit -m \"fix: rewrite middleware for Edge Runtime compatibility + Next.js 15.2.4\")"
+      "Bash(git commit -m \"fix: rewrite middleware for Edge Runtime compatibility + Next.js 15.2.4\")",
+      "Bash(npm show next versions --json)",
+      "Bash(node -e \"const v=require\\(''fs''\\).readFileSync\\(''/dev/stdin'',''utf8''\\); const arr=JSON.parse\\(v\\); const v15=arr.filter\\(x=>x.startsWith\\(''15.''\\)\\); console.log\\(v15.slice\\(-10\\).join\\(''\\\\n''\\)\\);\")",
+      "Bash(npm show next dist-tags)",
+      "Bash(npm install next@15.3.9)",
+      "Bash(git commit -m \"fix: upgrade Next.js to 15.3.9 to patch CVE-2025-66478\")",
+      "Bash(npm install --save-dev eslint-config-next@15.3.9)",
+      "Bash(git commit -m \"fix: seed demo data at startup, fix middleware JWT extraction, update deps:*)"
     ]
   }
 }
