@@ -196,6 +196,54 @@ export interface Workspace {
   updated_at: Date;
 }
 
+// ─── Agent System ───────────────────────────────────────────────────────────
+
+export type LLMProvider = 'claude' | 'openai' | 'grok' | 'gemini' | 'deepseek';
+export type AgentTone = 'professional' | 'casual' | 'witty' | 'provocative' | 'educational';
+
+export interface Agent {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  prompt: string;            // Custom system prompt / personality
+  tone: AgentTone;
+  topics: string[];          // Keywords to match posts against
+  reply_style: string;       // e.g. "Short punchy replies", "Ask questions"
+  llm_provider: LLMProvider;
+  llm_model: string;         // e.g. "claude-3-5-haiku-20241022"
+  auto_mode: boolean;        // true = auto-post, false = show preview first
+  max_replies_hour: number;
+  min_viral_score: number;   // 0 = reply to any post
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface AgentDecision {
+  id: string;
+  agent_id: string;
+  user_id: string;
+  post_text: string;
+  post_author: string;
+  post_url?: string;
+  reply_text: string;
+  tokens_used: number;
+  llm_provider: string;
+  llm_model: string;
+  was_auto_posted: boolean;
+  created_at: Date;
+}
+
+export interface UserLLMKey {
+  id: string;
+  user_id: string;
+  provider: LLMProvider;
+  api_key: string;           // In production: encrypted at rest
+  created_at: Date;
+  updated_at: Date;
+}
+
 // In-memory storage for MVP (will be replaced with real DB)
 // Use global singleton to persist across Next.js hot-reloads in dev mode
 declare global {
@@ -222,6 +270,10 @@ const _memoryDB = {
   teams: new Map<string, Team>(),
   teamMembers: new Map<string, TeamMember>(),
   workspaces: new Map<string, Workspace>(),
+  // Agent system
+  agents: new Map<string, Agent>(),
+  agentDecisions: new Map<string, AgentDecision>(),
+  userLLMKeys: new Map<string, UserLLMKey>(),         // key: `${userId}_${provider}`
 };
 
 // Persist across hot-reloads in development
@@ -316,4 +368,26 @@ export const memoryDB = global.__narrativeOS_db;
       });
     }
   });
+
+  // Demo agent — "Thought Leader" persona
+  if (!memoryDB.agents.has('demo_agent_001')) {
+    memoryDB.agents.set('demo_agent_001', {
+      id: 'demo_agent_001',
+      user_id: DEMO_USER_ID,
+      name: 'Thought Leader',
+      description: 'Engages with AI, tech, and startup content with sharp insights',
+      prompt: 'You are a seasoned tech entrepreneur and thought leader. You\'ve built multiple startups, invest in AI, and have strong opinions on the future of technology. You engage authentically, challenge conventional wisdom, and always add value.',
+      tone: 'professional',
+      topics: ['AI', 'startup', 'founder', 'tech', 'agent', 'LLM', 'SaaS'],
+      reply_style: 'Sharp, punchy insights. 1-2 sentences max. No emojis.',
+      llm_provider: 'claude',
+      llm_model: 'claude-3-5-haiku-20241022',
+      auto_mode: false,
+      max_replies_hour: 5,
+      min_viral_score: 0,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+    });
+  }
 })();

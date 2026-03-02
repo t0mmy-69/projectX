@@ -1,181 +1,278 @@
-// NarrativeOS Extension Popup Script
+// NarrativeOS Extension Popup v2.0
+// Email/password login → JWT stored → Agent selector → Auto-reply toggle
 
-const DEFAULT_API_BASE = 'http://localhost:3001/api';
+const DEFAULT_API_BASE = 'https://project-x-lilac.vercel.app/api';
 
-const STORAGE_KEYS = {
-  TOKEN: 'narrativeOS_extension_token',
-  USER_ID: 'narrativeOS_user_id',
-  AUTO_REPLY_ENABLED: 'narrativeOS_auto_reply_enabled',
-  API_BASE: 'narrativeOS_api_base'
+const KEYS = {
+  JWT:           'narrativeOS_jwt',
+  USER_ID:       'narrativeOS_user_id',
+  USER_EMAIL:    'narrativeOS_user_email',
+  AGENT_ID:      'narrativeOS_agent_id',
+  AUTO_REPLY:    'narrativeOS_auto_reply_enabled',
+  API_BASE:      'narrativeOS_api_base',
+  STAT_REPLIES:  'narrativeOS_stat_replies',
+  STAT_SCANNED:  'narrativeOS_stat_scanned',
 };
 
-const elements = {
-  status: document.getElementById('status'),
-  statusDot: document.getElementById('status-dot'),
-  statusText: document.getElementById('status-text'),
-  authSection: document.getElementById('auth-section'),
-  authenticatedSection: document.getElementById('authenticated-section'),
-  tokenInput: document.getElementById('token-input'),
-  authBtn: document.getElementById('auth-btn'),
-  errorMessage: document.getElementById('error-message'),
-  loading: document.getElementById('loading'),
-  autoReplyToggle: document.getElementById('auto-reply-toggle'),
-  settingsBtn: document.getElementById('settings-btn'),
-  generateDraftBtn: document.getElementById('generate-draft-btn'),
-  logoutBtn: document.getElementById('logout-btn'),
-  userIdDisplay: document.getElementById('user-id-display')
-};
+// ─── DOM refs ───────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function getAPIBase() {
-  const result = await chrome.storage.local.get(STORAGE_KEYS.API_BASE);
-  return result[STORAGE_KEYS.API_BASE] || DEFAULT_API_BASE;
+  const r = await chrome.storage.local.get(KEYS.API_BASE);
+  const stored = (r[KEYS.API_BASE] || '').trim().replace(/\/+$/, '');
+  if (!stored) return DEFAULT_API_BASE;
+  return stored.endsWith('/api') ? stored : `${stored}/api`;
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', initializePopup);
+async function get(key) {
+  const r = await chrome.storage.local.get(key);
+  return r[key];
+}
 
-async function initializePopup() {
-  const token = await getStoredValue(STORAGE_KEYS.TOKEN);
-  const userId = await getStoredValue(STORAGE_KEYS.USER_ID);
-  const autoReplyEnabled = await getStoredValue(STORAGE_KEYS.AUTO_REPLY_ENABLED);
+async function set(obj) {
+  await chrome.storage.local.set(obj);
+}
 
-  if (token && userId) {
-    showAuthenticatedUI(userId);
-    if (elements.autoReplyToggle) {
-      elements.autoReplyToggle.checked = autoReplyEnabled === 'true';
-    }
+function showMsg(elId, text, type = '') {
+  const el = $(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.className = `message ${type}`;
+  if (type === 'success') setTimeout(() => { el.textContent = ''; el.className = 'message'; }, 3000);
+}
+
+function showLoading(show) {
+  const l = $('loading');
+  if (l) l.style.display = show ? 'flex' : 'none';
+  const btn = $('login-btn');
+  if (btn) btn.disabled = show;
+}
+
+// ─── Initialize ───────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const jwt       = await get(KEYS.JWT);
+  const userId    = await get(KEYS.USER_ID);
+  const userEmail = await get(KEYS.USER_EMAIL);
+
+  if (jwt && userId) {
+    await showAuthenticatedUI(userEmail || userId);
   } else {
-    showUnauthenticatedUI();
+    showLoginUI();
   }
 
-  setupEventListeners();
+  setupListeners();
+});
+
+function setupListeners() {
+  $('login-btn')?.addEventListener('click', handleLogin);
+  $('logout-btn')?.addEventListener('click', handleLogout);
+  $('auto-reply-toggle')?.addEventListener('change', handleAutoReplyToggle);
+  $('options-link')?.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  $('agent-select')?.addEventListener('change', handleAgentChange);
+  $('password-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 }
 
-function setupEventListeners() {
-  elements.authBtn?.addEventListener('click', handleAuthentication);
-  elements.logoutBtn?.addEventListener('click', handleLogout);
-  elements.autoReplyToggle?.addEventListener('change', handleAutoReplyToggle);
-  elements.settingsBtn?.addEventListener('click', () => chrome.runtime.openOptionsPage());
-  elements.generateDraftBtn?.addEventListener('click', handleGenerateDraft);
-  elements.tokenInput?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleAuthentication();
-  });
-  // Footer options link (no inline onclick — CSP safe)
-  document.getElementById('options-link')?.addEventListener('click', () => chrome.runtime.openOptionsPage());
-}
+// ─── Login ────────────────────────────────────────────────────────────────────
 
-async function handleAuthentication() {
-  const token = elements.tokenInput?.value.trim();
-  if (!token) {
-    showError('Please enter a token');
+async function handleLogin() {
+  const email    = $('email-input')?.value.trim();
+  const password = $('password-input')?.value.trim();
+
+  if (!email || !password) {
+    showMsg('error-message', 'Enter email and password', 'error');
     return;
   }
 
   showLoading(true);
-  clearMessage();
+  showMsg('error-message', '', '');
 
   try {
     const API_BASE = await getAPIBase();
-    const response = await fetch(`${API_BASE}/extension/validate`, {
-      method: 'PUT',
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
+      body: JSON.stringify({ email, password }),
     });
+    const data = await res.json();
 
-    const data = await response.json();
-
-    if (data.success) {
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TOKEN]: token,
-        [STORAGE_KEYS.USER_ID]: data.data.user_id
+    if (data.success && data.data?.token) {
+      await set({
+        [KEYS.JWT]:        data.data.token,
+        [KEYS.USER_ID]:    data.data.user_id || data.data.id,
+        [KEYS.USER_EMAIL]: data.data.email || email,
       });
-
-      if (elements.tokenInput) elements.tokenInput.value = '';
-      showAuthenticatedUI(data.data.user_id);
-      showSuccess('Connected to NarrativeOS!');
+      $('password-input').value = '';
+      await showAuthenticatedUI(data.data.email || email);
     } else {
-      showError(data.error || 'Authentication failed. Check your token.');
+      showMsg('error-message', data.error || 'Login failed', 'error');
     }
-  } catch (error) {
-    showError('Cannot reach server. Check API URL in Options.');
-  } finally {
-    showLoading(false);
+  } catch {
+    showMsg('error-message', 'Cannot reach server. Check API URL in Options.', 'error');
   }
+
+  showLoading(false);
 }
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
 
 async function handleLogout() {
-  await chrome.storage.local.remove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.USER_ID]);
-  showUnauthenticatedUI();
-  showSuccess('Disconnected successfully');
+  const jwt = await get(KEYS.JWT);
+  const API_BASE = await getAPIBase();
+  if (jwt) {
+    fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${jwt}` },
+    }).catch(() => {});
+  }
+  await chrome.storage.local.remove([KEYS.JWT, KEYS.USER_ID, KEYS.USER_EMAIL]);
+  // Notify content script to disable auto-reply
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { action: 'setAutoReply', enabled: false }).catch(() => {});
+  });
+  showLoginUI();
 }
+
+// ─── UI State ─────────────────────────────────────────────────────────────────
+
+function showLoginUI() {
+  $('login-section').style.display = 'block';
+  $('authenticated-section').style.display = 'none';
+  $('status-dot').className = 'status-dot disconnected';
+  $('status-text').textContent = 'Not signed in';
+  $('replies-today').textContent = '';
+}
+
+async function showAuthenticatedUI(email) {
+  $('login-section').style.display = 'none';
+  $('authenticated-section').style.display = 'block';
+  $('status-dot').className = 'status-dot connected';
+  $('status-text').textContent = 'Connected';
+  $('user-email-display').textContent = email;
+
+  // Load agents
+  await loadAgents();
+
+  // Load stats from storage
+  const replies = (await get(KEYS.STAT_REPLIES)) || 0;
+  const scanned = (await get(KEYS.STAT_SCANNED)) || 0;
+  $('stat-replies').textContent = replies;
+  $('stat-scanned').textContent = scanned;
+  $('replies-today').textContent = replies > 0 ? `${replies} replies today` : '';
+
+  // Restore toggle state
+  const autoReply  = await get(KEYS.AUTO_REPLY);
+  const toggle = $('auto-reply-toggle');
+  if (toggle) toggle.checked = autoReply === 'true';
+  updateToggleSubText();
+}
+
+// ─── Agents ───────────────────────────────────────────────────────────────────
+
+async function loadAgents() {
+  const jwt = await get(KEYS.JWT);
+  if (!jwt) return;
+
+  try {
+    const API_BASE = await getAPIBase();
+    const res = await fetch(`${API_BASE}/agents`, {
+      headers: { 'Authorization': `Bearer ${jwt}` },
+    });
+    const data = await res.json();
+
+    const select     = $('agent-select');
+    const noAgents   = $('no-agents-msg');
+    const savedAgent = await get(KEYS.AGENT_ID);
+
+    if (data.success && data.data.length > 0) {
+      select.innerHTML = '';
+      data.data.forEach(agent => {
+        const opt = document.createElement('option');
+        opt.value = agent.id;
+        opt.textContent = `${agent.is_active ? '● ' : '○ '}${agent.name} (${agent.llm_provider})`;
+        if (agent.id === savedAgent) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.style.display = 'block';
+      if (noAgents) noAgents.style.display = 'none';
+
+      // If no saved agent, select first active one
+      if (!savedAgent) {
+        const firstActive = data.data.find(a => a.is_active);
+        if (firstActive) {
+          select.value = firstActive.id;
+          await set({ [KEYS.AGENT_ID]: firstActive.id });
+        }
+      }
+    } else {
+      if (select) select.style.display = 'none';
+      if (noAgents) noAgents.style.display = 'block';
+      // Disable toggle
+      const toggle = $('auto-reply-toggle');
+      if (toggle) toggle.disabled = true;
+    }
+  } catch {
+    showMsg('error-message-auth', 'Could not load agents', 'error');
+  }
+
+  updateToggleSubText();
+}
+
+async function handleAgentChange(e) {
+  const agentId = e.target.value;
+  await set({ [KEYS.AGENT_ID]: agentId });
+  // Notify content script about agent change
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'setAgent', agentId }).catch(() => {});
+    }
+  });
+  updateToggleSubText();
+}
+
+// ─── Auto-Reply Toggle ────────────────────────────────────────────────────────
 
 async function handleAutoReplyToggle(e) {
   const enabled = e.target.checked;
-  await chrome.storage.local.set({
-    [STORAGE_KEYS.AUTO_REPLY_ENABLED]: enabled.toString()
+  const agentId = await get(KEYS.AGENT_ID);
+
+  if (enabled && !agentId) {
+    e.target.checked = false;
+    showMsg('error-message-auth', 'Select an agent first', 'error');
+    return;
+  }
+
+  await set({ [KEYS.AUTO_REPLY]: enabled.toString() });
+  updateToggleSubText();
+
+  // Notify content script
+  const jwt = await get(KEYS.JWT);
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'setAutoReply',
+        enabled,
+        agentId: agentId || null,
+        jwt: jwt || null,
+      }).catch(() => {});
+    }
   });
 }
 
-function handleGenerateDraft() {
-  showLoading(true);
-  chrome.runtime.sendMessage(
-    { action: 'generateDraft', data: { topic_id: 'current' } },
-    (response) => {
-      showLoading(false);
-      if (response?.success) {
-        showSuccess('Draft generated! Open X to see it.');
-      } else {
-        showError(response?.error || 'Failed to generate draft');
-      }
-    }
-  );
-}
+function updateToggleSubText() {
+  const el = $('toggle-sub-text');
+  if (!el) return;
+  const select = $('agent-select');
+  const hasAgent = select && select.value && select.style.display !== 'none';
+  const isOn = $('auto-reply-toggle')?.checked;
 
-function showAuthenticatedUI(userId) {
-  if (elements.statusDot) elements.statusDot.className = 'status-dot connected';
-  if (elements.statusText) elements.statusText.textContent = 'Connected to NarrativeOS';
-  if (elements.authSection) elements.authSection.style.display = 'none';
-  if (elements.authenticatedSection) elements.authenticatedSection.style.display = 'block';
-  if (elements.userIdDisplay) {
-    elements.userIdDisplay.textContent = `User: ${userId.substring(0, 12)}...`;
+  if (!hasAgent) {
+    el.textContent = 'Select an agent to enable';
+  } else if (isOn) {
+    el.textContent = 'Scanning feed for matching posts...';
+  } else {
+    el.textContent = 'Click to start scanning your feed';
   }
-}
-
-function showUnauthenticatedUI() {
-  if (elements.statusDot) elements.statusDot.className = 'status-dot disconnected';
-  if (elements.statusText) elements.statusText.textContent = 'Not connected';
-  if (elements.authSection) elements.authSection.style.display = 'block';
-  if (elements.authenticatedSection) elements.authenticatedSection.style.display = 'none';
-}
-
-function showError(message) {
-  if (elements.errorMessage) {
-    elements.errorMessage.textContent = message;
-    elements.errorMessage.className = 'message error';
-  }
-}
-
-function showSuccess(message) {
-  if (elements.errorMessage) {
-    elements.errorMessage.textContent = message;
-    elements.errorMessage.className = 'message success';
-    setTimeout(clearMessage, 3000);
-  }
-}
-
-function clearMessage() {
-  if (elements.errorMessage) {
-    elements.errorMessage.textContent = '';
-    elements.errorMessage.className = 'message';
-  }
-}
-
-function showLoading(show) {
-  if (elements.loading) elements.loading.style.display = show ? 'flex' : 'none';
-  if (elements.authBtn) elements.authBtn.disabled = show;
-}
-
-async function getStoredValue(key) {
-  const result = await chrome.storage.local.get(key);
-  return result[key];
 }

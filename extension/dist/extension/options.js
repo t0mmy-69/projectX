@@ -7,7 +7,7 @@ const STORAGE_KEYS = {
   API_BASE: 'narrativeOS_api_base'
 };
 
-const DEFAULT_API = 'http://localhost:3001/api';
+const DEFAULT_API = 'https://project-x-lilac.vercel.app/api';
 
 async function init() {
   const result = await chrome.storage.local.get([
@@ -17,8 +17,12 @@ async function init() {
   ]);
 
   const apiBaseInput = document.getElementById('api-base-input');
+  const resolvedAPI = normalizeAPIBase(result[STORAGE_KEYS.API_BASE] || DEFAULT_API);
+  if (resolvedAPI !== result[STORAGE_KEYS.API_BASE]) {
+    await chrome.storage.local.set({ [STORAGE_KEYS.API_BASE]: resolvedAPI });
+  }
   if (apiBaseInput) {
-    apiBaseInput.value = result[STORAGE_KEYS.API_BASE] || DEFAULT_API;
+    apiBaseInput.value = resolvedAPI;
   }
 
   // Show debug info
@@ -26,6 +30,7 @@ async function init() {
   if (debugEl) {
     debugEl.innerHTML = [
       `API URL: ${result[STORAGE_KEYS.API_BASE] || DEFAULT_API}`,
+      `Resolved API URL: ${resolvedAPI}`,
       `Token: ${result[STORAGE_KEYS.TOKEN] ? result[STORAGE_KEYS.TOKEN].substring(0, 8) + '...' : 'Not set'}`,
       `User ID: ${result[STORAGE_KEYS.USER_ID] || 'Not set'}`,
       `Extension ID: ${chrome.runtime.id}`
@@ -42,14 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
       showMessage('save-message', 'Please enter a valid URL', 'error');
       return;
     }
-    await chrome.storage.local.set({ [STORAGE_KEYS.API_BASE]: url });
+    const normalized = normalizeAPIBase(url);
+    await chrome.storage.local.set({ [STORAGE_KEYS.API_BASE]: normalized });
     showMessage('save-message', 'Settings saved!', 'success');
     await init();
   });
 
   document.getElementById('test-btn')?.addEventListener('click', async () => {
     const inputEl = document.getElementById('api-base-input');
-    const url = inputEl?.value.trim() || DEFAULT_API;
+    const url = normalizeAPIBase(inputEl?.value.trim() || DEFAULT_API);
     const dot = document.getElementById('conn-dot');
     const text = document.getElementById('conn-text');
 
@@ -86,4 +92,10 @@ function showMessage(id, msg, type) {
     el.textContent = '';
     el.className = 'message';
   }, 3000);
+}
+
+function normalizeAPIBase(url) {
+  const cleaned = (url || '').trim().replace(/\/+$/, '');
+  if (!cleaned) return DEFAULT_API;
+  return cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`;
 }

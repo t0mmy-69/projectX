@@ -5,16 +5,34 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { getAuthHeaders } from '@/lib/authHeaders';
 import { useToast } from '@/components/ToastProvider';
 
+type LLMProvider = 'claude' | 'openai' | 'grok' | 'gemini' | 'deepseek';
+
+const PROVIDER_INFO: Record<LLMProvider, { label: string; icon: string; placeholder: string; docsUrl: string }> = {
+  claude:   { label: 'Anthropic (Claude)',  icon: '🧠', placeholder: 'sk-ant-api03-...', docsUrl: 'https://console.anthropic.com/settings/keys' },
+  openai:   { label: 'OpenAI (GPT)',        icon: '✨', placeholder: 'sk-proj-...', docsUrl: 'https://platform.openai.com/api-keys' },
+  grok:     { label: 'xAI (Grok)',          icon: '⚡', placeholder: 'xai-...', docsUrl: 'https://console.x.ai/team/default/api-keys' },
+  gemini:   { label: 'Google (Gemini)',     icon: '💎', placeholder: 'AIzaSy...', docsUrl: 'https://aistudio.google.com/app/apikey' },
+  deepseek: { label: 'DeepSeek',            icon: '🔍', placeholder: 'sk-...', docsUrl: 'https://platform.deepseek.com/api_keys' },
+};
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('Persona');
   const [profile, setProfile] = useState<any>(null);
   const [extensionToken, setExtensionToken] = useState('');
   const [tokenGenerating, setTokenGenerating] = useState(false);
   const [tokenCopied, setTokenCopied] = useState(false);
-  const [llmApiKey, setLlmApiKey] = useState('');
   const [xHandle, setXHandle] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  // LLM keys state
+  const [llmKeys, setLlmKeys] = useState<Record<LLMProvider, { has_key: boolean; masked?: string }>>({
+    claude: { has_key: false }, openai: { has_key: false }, grok: { has_key: false },
+    gemini: { has_key: false }, deepseek: { has_key: false },
+  });
+  const [llmInputs, setLlmInputs] = useState<Record<LLMProvider, string>>({
+    claude: '', openai: '', grok: '', gemini: '', deepseek: '',
+  });
+  const [savingKey, setSavingKey] = useState<LLMProvider | null>(null);
   const { showToast } = useToast();
 
   const loadProfile = useCallback(async () => {
@@ -28,7 +46,18 @@ export default function SettingsPage() {
     } catch {}
   }, []);
 
-  useEffect(() => { loadProfile(); }, [loadProfile]);
+  const loadLLMKeys = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/llm-keys', { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.success) setLlmKeys(data.data);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    loadProfile();
+    loadLLMKeys();
+  }, [loadProfile, loadLLMKeys]);
 
   const generateToken = async () => {
     setTokenGenerating(true);
@@ -47,6 +76,36 @@ export default function SettingsPage() {
     setTimeout(() => setTokenCopied(false), 2000);
   };
 
+  const saveLLMKey = async (provider: LLMProvider) => {
+    const key = llmInputs[provider].trim();
+    if (!key) { showToast('Enter an API key first', 'error'); return; }
+    setSavingKey(provider);
+    try {
+      const res = await fetch('/api/user/llm-keys', {
+        method: 'POST', headers: getAuthHeaders(),
+        body: JSON.stringify({ provider, api_key: key }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLlmInputs(prev => ({ ...prev, [provider]: '' }));
+        await loadLLMKeys();
+        showToast(`${PROVIDER_INFO[provider].label} key saved!`, 'success');
+      } else {
+        showToast(data.error || 'Failed to save key', 'error');
+      }
+    } catch { showToast('Network error', 'error'); }
+    setSavingKey(null);
+  };
+
+  const deleteLLMKey = async (provider: LLMProvider) => {
+    if (!confirm(`Remove ${PROVIDER_INFO[provider].label} API key?`)) return;
+    try {
+      await fetch(`/api/user/llm-keys?provider=${provider}`, { method: 'DELETE', headers: getAuthHeaders() });
+      await loadLLMKeys();
+      showToast('Key removed', 'info');
+    } catch {}
+  };
+
   const saveProfile = async () => {
     setSaving(true);
     setSaveMsg('');
@@ -54,7 +113,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ x_username: xHandle, llm_api_key: llmApiKey || undefined }),
+        body: JSON.stringify({ x_username: xHandle }),
       });
       const data = await res.json();
       if (data.success) {
@@ -199,24 +258,55 @@ export default function SettingsPage() {
 
         {activeTab === 'API Keys' && (
           <div className="space-y-6">
-            <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
-              <h3 className="text-lg font-bold">LLM API Key</h3>
-              <p className="text-sm text-muted">Add your own API key for AI-powered auto-replies in the Chrome Extension.</p>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted uppercase tracking-wider">Anthropic / OpenAI API Key</label>
-                <input type="password" value={llmApiKey} onChange={e => setLlmApiKey(e.target.value)}
-                  aria-label="LLM API key"
-                  placeholder="sk-ant-... or sk-..."
-                  className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3 focus:outline-none focus:border-primary/50 text-sm font-mono" />
-                <p className="text-xs text-muted">Stored securely per-user. Used for extension auto-reply generation.</p>
+            <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-6">
+              <div>
+                <h3 className="text-lg font-bold mb-1">LLM API Keys</h3>
+                <p className="text-sm text-muted">Add API keys for each LLM provider. Used by your Agents for auto-reply on X.</p>
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={saveProfile} disabled={saving}
-                  className="px-5 py-2.5 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50">
-                  {saving ? 'Saving...' : 'Save API Key'}
-                </button>
-                {saveMsg && <span className={`text-sm font-bold ${saveMsg === 'Saved!' ? 'text-green-400' : 'text-red-400'}`}>{saveMsg}</span>}
-              </div>
+
+              {(Object.keys(PROVIDER_INFO) as LLMProvider[]).map(provider => {
+                const info    = PROVIDER_INFO[provider];
+                const keyInfo = llmKeys[provider];
+                const inputVal = llmInputs[provider];
+                const isSaving = savingKey === provider;
+
+                return (
+                  <div key={provider} className="p-4 bg-[#0A0A0B] border border-white/5 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{info.icon}</span>
+                        <span className="text-sm font-bold">{info.label}</span>
+                        {keyInfo.has_key && (
+                          <span className="px-2 py-0.5 rounded-md bg-green-500/10 text-green-400 text-[9px] font-black uppercase tracking-wider">Active</span>
+                        )}
+                      </div>
+                      <a href={info.docsUrl} target="_blank" rel="noreferrer"
+                        className="text-[10px] text-muted hover:text-primary transition-colors">
+                        Get key ↗
+                      </a>
+                    </div>
+
+                    {keyInfo.has_key ? (
+                      <div className="flex items-center justify-between bg-black/60 p-3 rounded-lg border border-green-500/20">
+                        <code className="text-xs font-mono text-green-400">{keyInfo.masked}</code>
+                        <button onClick={() => deleteLLMKey(provider)} className="text-xs text-muted hover:text-red-400 transition-colors font-bold ml-3">Remove</button>
+                      </div>
+                    ) : null}
+
+                    <div className="flex gap-2">
+                      <input type="password" value={inputVal}
+                        onChange={e => setLlmInputs(prev => ({ ...prev, [provider]: e.target.value }))}
+                        placeholder={keyInfo.has_key ? 'Enter new key to replace...' : info.placeholder}
+                        aria-label={`${info.label} API key`}
+                        className="flex-1 bg-black border border-white/5 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary/50 text-sm font-mono" />
+                      <button onClick={() => saveLLMKey(provider)} disabled={isSaving || !inputVal.trim()}
+                        className="px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50">
+                        {isSaving ? '...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="p-5 rounded-xl border border-orange-500/20 bg-orange-500/5">
@@ -225,7 +315,7 @@ export default function SettingsPage() {
                 <span className="text-xs font-bold uppercase tracking-wider">Privacy Note</span>
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                Your API key is stored in our database associated with your account and never logged or shared. It is only used when you trigger auto-reply from the extension.
+                Your API keys are stored per-user and never logged or shared. They are only used when your agents generate replies via the Chrome Extension.
               </p>
             </div>
           </div>

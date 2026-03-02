@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { icon: 'rss_feed', label: 'Viral Feed', href: '/viral-feed' },
     { icon: 'topic', label: 'Topics', href: '/topics' },
     { icon: 'edit_note', label: 'Draft Studio', href: '/draft-studio' },
+    { icon: 'android', label: 'Agents', href: '/agents' },
     { icon: 'smart_toy', label: 'Automation', href: '/automation' },
     { icon: 'settings', label: 'Settings', href: '/settings' },
 ];
@@ -19,6 +20,7 @@ function getPageTitle(pathname: string): string {
     if (item) return item.label;
     if (pathname.startsWith('/admin')) return 'Admin';
     if (pathname.startsWith('/onboarding')) return 'Onboarding';
+    if (pathname.startsWith('/agents')) return 'Agents';
     return 'Overview';
 }
 
