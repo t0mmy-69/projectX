@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 
 export default function LandingPage() {
     const revealRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -18,13 +21,21 @@ export default function LandingPage() {
             if (ref) observer.observe(ref);
         });
 
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+        };
     }, []);
 
     const addToRefs = (el: HTMLDivElement | null) => {
         if (el && !revealRefs.current.includes(el)) {
             revealRefs.current.push(el);
         }
+    };
+
+    const closeMobileMenuWithDelay = () => {
+        if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = setTimeout(() => setMobileMenuOpen(false), 120);
     };
 
     return (
@@ -39,15 +50,35 @@ export default function LandingPage() {
                         <span className="font-bold text-xl tracking-tight">NarrativeOS</span>
                     </div>
                     <div className="hidden md:flex items-center gap-10 text-[15px] font-medium text-muted">
-                        <a className="hover:text-white transition-all duration-300" href="#features">Features</a>
-                        <a className="hover:text-white transition-all duration-300" href="#workflow">Workflow</a>
-                        <a className="hover:text-white transition-all duration-300" href="#pricing">Pricing</a>
+                        <Link className="hover:text-white transition-all duration-300" href="/#features">Features</Link>
+                        <Link className="hover:text-white transition-all duration-300" href="/#workflow">Workflow</Link>
+                        <Link className="hover:text-white transition-all duration-300" href="/#pricing">Pricing</Link>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <a className="text-[15px] font-medium text-muted hover:text-white transition-all duration-300" href="#">Log in</a>
-                        <a className="text-[15px] font-semibold bg-primary hover:bg-primary-light px-6 py-2.5 rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(129,74,200,0.2)]" href="/onboarding">Get Started</a>
+                    <div className="hidden md:flex items-center gap-6">
+                        <Link className="text-[15px] font-medium text-muted hover:text-white transition-all duration-300" href="/login">Log in</Link>
+                        <Link className="text-[15px] font-semibold bg-primary hover:bg-primary-light px-6 py-2.5 rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(129,74,200,0.2)] btn-glow" href="/onboarding">Get Started</Link>
                     </div>
+                    <button
+                        type="button"
+                        className="md:hidden w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center"
+                        onClick={() => setMobileMenuOpen(v => !v)}
+                        aria-label="Toggle navigation menu"
+                        aria-expanded={mobileMenuOpen}
+                    >
+                        <span className="material-symbols-outlined text-white">{mobileMenuOpen ? 'close' : 'menu'}</span>
+                    </button>
                 </div>
+                {mobileMenuOpen && (
+                    <div className="md:hidden border-t border-white/10 bg-black/95 px-6 py-4 space-y-3">
+                        <Link href="/#features" className="block text-sm font-bold text-muted hover:text-white" onClick={closeMobileMenuWithDelay}>Features</Link>
+                        <Link href="/#workflow" className="block text-sm font-bold text-muted hover:text-white" onClick={closeMobileMenuWithDelay}>Workflow</Link>
+                        <Link href="/#pricing" className="block text-sm font-bold text-muted hover:text-white" onClick={closeMobileMenuWithDelay}>Pricing</Link>
+                        <div className="pt-2 flex gap-2">
+                            <Link href="/login" className="px-3 py-2 border border-white/10 rounded-lg text-xs font-bold" onClick={closeMobileMenuWithDelay}>Log in</Link>
+                            <Link href="/onboarding" className="px-3 py-2 bg-primary rounded-lg text-xs font-bold text-white" onClick={closeMobileMenuWithDelay}>Get Started</Link>
+                        </div>
+                    </div>
+                )}
             </nav>
 
             {/* Hero Section */}
@@ -58,22 +89,22 @@ export default function LandingPage() {
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                         <span className="text-[11px] font-bold text-muted uppercase tracking-[0.2em]">Next-Gen Creator OS</span>
                     </div>
-                    <h1 ref={addToRefs} className="reveal text-6xl md:text-8xl font-extrabold tracking-tight leading-[1.05] mb-8 gradient-text">
-                        Revolutionize Your <br />
-                        <span className="purple-gradient-text">Creator Workflow</span>
+                    <h1 ref={addToRefs} className="reveal text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05] mb-8 gradient-text">
+                        Turn X Into Your <br />
+                        <span className="purple-gradient-text">Narrative Weapon</span>
                     </h1>
                     <p ref={addToRefs} className="reveal text-xl text-muted mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
                         The elite intelligence layer for X creators. Identify trends before they explode, automate your drafting, and dominate the narrative with precision.
                     </p>
                     <div ref={addToRefs} className="reveal flex flex-col sm:flex-row gap-5 justify-center pt-4">
-                        <button onClick={() => window.location.href = '/onboarding'} className="px-10 py-4 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-all duration-500 shadow-[0_0_30px_rgba(129,74,200,0.3)] flex items-center justify-center gap-3 group">
+                        <button onClick={() => window.location.href = '/onboarding'} className="px-10 py-4 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-all duration-500 shadow-[0_0_30px_rgba(129,74,200,0.3)] flex items-center justify-center gap-3 group btn-glow" aria-label="Start free trial">
                             Start Free Trial
                             <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                         </button>
-                        <button className="px-10 py-4 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white font-bold rounded-xl transition-all duration-500 flex items-center justify-center gap-3">
+                        <Link href="/demo" className="px-10 py-4 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white font-bold rounded-xl transition-all duration-500 flex items-center justify-center gap-3">
                             <span className="material-symbols-outlined">play_circle</span>
                             Watch Demo
-                        </button>
+                        </Link>
                     </div>
                 </div>
 
@@ -145,12 +176,12 @@ export default function LandingPage() {
                 </div>
             </header>
 
-            {/* Features Section */}
+            {/* Problem + Solution Section */}
             <section id="features" className="py-40 relative">
                 <div className="max-w-[1240px] mx-auto px-6">
                     <div ref={addToRefs} className="reveal text-center mb-24">
-                        <h2 className="text-5xl font-extrabold mb-6 tracking-tight">The Modern Creator's <span className="purple-gradient-text">Secret Weapon</span></h2>
-                        <p className="text-muted text-xl max-w-2xl mx-auto font-medium">Built for those who demand more than base-level visibility.</p>
+                        <h2 className="text-5xl font-extrabold mb-6 tracking-tight">Problem: Noise. <span className="purple-gradient-text">Solution: NarrativeOS.</span></h2>
+                        <p className="text-muted text-xl max-w-2xl mx-auto font-medium">Track what matters, detect viral shifts, and ship persona-matched content faster.</p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
@@ -190,7 +221,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Workflow Section */}
+            {/* How It Works Section */}
             <section id="workflow" className="py-40 bg-secondary-bg border-y border-white/5">
                 <div className="max-w-[1240px] mx-auto px-6">
                     <div ref={addToRefs} className="reveal text-center mb-24">
@@ -284,33 +315,33 @@ export default function LandingPage() {
                         <div>
                             <h4 className="font-bold text-white mb-8 uppercase text-xs tracking-widest">Product</h4>
                             <ul className="space-y-4 text-[15px] text-muted font-medium">
-                                <li><a className="hover:text-primary transition-all" href="#">Viral Feed</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Draft Studio</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Intelligence</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Extension</a></li>
+                                <li><Link className="hover:text-primary transition-all" href="/viral-feed">Viral Feed</Link></li>
+                                <li><Link className="hover:text-primary transition-all" href="/draft-studio">Draft Studio</Link></li>
+                                <li><Link className="hover:text-primary transition-all" href="/dashboard">Intelligence</Link></li>
+                                <li><Link className="hover:text-primary transition-all" href="/settings">Extension</Link></li>
                             </ul>
                         </div>
                         <div>
                             <h4 className="font-bold text-white mb-8 uppercase text-xs tracking-widest">Company</h4>
                             <ul className="space-y-4 text-[15px] text-muted font-medium">
-                                <li><a className="hover:text-primary transition-all" href="#">About</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Changelog</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Careers</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Contact</a></li>
+                                <li><a className="hover:text-primary transition-all" href="https://x.com" target="_blank" rel="noopener noreferrer">About</a></li>
+                                <li><a className="hover:text-primary transition-all" href="/changelog">Changelog</a></li>
+                                <li><a className="hover:text-primary transition-all" href="mailto:careers@narrativeos.app">Careers</a></li>
+                                <li><a className="hover:text-primary transition-all" href="mailto:hello@narrativeos.app">Contact</a></li>
                             </ul>
                         </div>
                         <div>
                             <h4 className="font-bold text-white mb-8 uppercase text-xs tracking-widest">Social</h4>
                             <ul className="space-y-4 text-[15px] text-muted font-medium">
-                                <li><a className="hover:text-primary transition-all" href="#">Twitter / X</a></li>
-                                <li><a className="hover:text-primary transition-all" href="#">Discord</a></li>
+                                <li><a className="hover:text-primary transition-all" href="https://x.com" target="_blank" rel="noopener noreferrer">Twitter / X</a></li>
+                                <li><a className="hover:text-primary transition-all" href="https://discord.com" target="_blank" rel="noopener noreferrer">Discord</a></li>
                             </ul>
                         </div>
                     </div>
                     <div className="pt-12 border-t border-white/5 flex flex-col md:row justify-between items-center gap-6">
                         <p className="text-xs text-muted font-bold tracking-widest uppercase">© 2026 NarrativeOS Inc. Built for the elite.</p>
                         <div className="flex gap-8">
-                            <a className="text-muted hover:text-white transition-all duration-300" href="#">
+                            <a className="text-muted hover:text-white transition-all duration-300" href="https://x.com" target="_blank" rel="noopener noreferrer">
                                 <span className="sr-only">Twitter</span>
                                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />

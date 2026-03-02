@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, Draft } from '@/lib/db';
 import { analyzePersona } from '@/lib/personaEngine';
-import { generateContent } from '@/lib/contentGenerator';
+import { generateContent } from '@/lib/claudeContentGenerator';
 import { getUserId } from '@/lib/getUser';
 
 // GET /api/drafts - Get user's drafts
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate content
-    const content = generateContent({
+    const content = await generateContent(userId, {
       persona: {
         tone: persona.tone,
         avg_length: persona.avg_length,

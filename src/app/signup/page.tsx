@@ -52,23 +52,23 @@ export default function SignupPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-muted uppercase tracking-wider">First Name *</label>
-                            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Cuong"
+                            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Cuong" required aria-label="First name" autoComplete="given-name"
                                 className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-muted uppercase tracking-wider">Last Name</label>
-                            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Vu"
+                            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Vu" aria-label="Last name" autoComplete="family-name"
                                 className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm" />
                         </div>
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-muted uppercase tracking-wider">Email Address *</label>
-                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.com"
+                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.com" required aria-label="Email address" autoComplete="email"
                             className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm" />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-muted uppercase tracking-wider">Password *</label>
-                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters"
+                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" required aria-label="Password" autoComplete="new-password"
                             className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm" />
                     </div>
                     <button type="submit" disabled={loading}

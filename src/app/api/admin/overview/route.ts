@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
           avg_cost_per_token: globalStats.averageCostPerToken,
         },
         performance: {
-          response_time_ms: Math.random() * 100 + 50,
+          response_time_ms: 85,
           cache_hit_rate: 0.65,
           database_connections: 1,
         },

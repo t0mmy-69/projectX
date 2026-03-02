@@ -5,6 +5,14 @@ import { generateJWT } from '@/lib/auth';
 // Demo user + data are pre-seeded in db.ts (works on every cold start / serverless instance)
 export async function GET() {
   try {
+    const demoEnabled = process.env.NODE_ENV !== 'production' || process.env.ENABLE_DEMO_ACCOUNT === 'true';
+    if (!demoEnabled) {
+      return NextResponse.json(
+        { error: 'Demo mode is disabled' },
+        { status: 403 }
+      );
+    }
+
     const DEMO_USER_ID = 'demo_user_001';
     const DEMO_EMAIL   = 'demo@narrativeos.app';
     const DEMO_NAME    = 'Demo User';

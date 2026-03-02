@@ -2,16 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
-}
+import { getAuthHeaders } from '@/lib/authHeaders';
+import { useToast } from '@/components/ToastProvider';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('Persona');
@@ -23,6 +15,7 @@ export default function SettingsPage() {
   const [xHandle, setXHandle] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const { showToast } = useToast();
 
   const loadProfile = useCallback(async () => {
     try {
@@ -67,16 +60,18 @@ export default function SettingsPage() {
       if (data.success) {
         setSaveMsg('Saved!');
         await loadProfile();
+        showToast('Settings saved', 'success');
       } else {
         setSaveMsg('Error saving');
+        showToast(data.error || 'Error saving settings', 'error');
       }
-    } catch { setSaveMsg('Error saving'); }
+    } catch { setSaveMsg('Error saving'); showToast('Network error while saving', 'error'); }
     setSaving(false);
     setTimeout(() => setSaveMsg(''), 3000);
   };
 
   const logout = () => {
-    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    fetch('/api/auth/logout', { method: 'POST', headers: getAuthHeaders(false) }).catch(() => {});
     localStorage.removeItem('narrativeOS_auth');
     window.location.href = '/login';
   };
@@ -84,6 +79,11 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl space-y-8">
+        <div className="flex justify-end">
+          <button onClick={logout} className="px-4 py-2.5 border border-red-500/30 text-red-300 rounded-xl text-sm font-bold hover:bg-red-500/10 transition-all">
+            Logout
+          </button>
+        </div>
         {/* Tabs */}
         <div className="flex border-b border-white/5 gap-8">
           {['Persona', 'Extension', 'API Keys', 'Security'].map((tab) => (
@@ -113,6 +113,7 @@ export default function SettingsPage() {
                   <div className="flex gap-2">
                     <span className="bg-[#0A0A0B] border border-white/5 rounded-l-xl px-4 py-3 text-muted border-r-0 font-bold text-sm">@</span>
                     <input type="text" value={xHandle} onChange={e => setXHandle(e.target.value)} placeholder="yourusername"
+                      aria-label="X handle"
                       className="flex-1 bg-[#0A0A0B] border border-white/5 rounded-r-xl px-4 py-3 focus:outline-none focus:border-primary/50 text-sm" />
                   </div>
                   <p className="text-xs text-muted">Used to analyze your writing style and build your AI persona.</p>
@@ -204,6 +205,7 @@ export default function SettingsPage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-muted uppercase tracking-wider">Anthropic / OpenAI API Key</label>
                 <input type="password" value={llmApiKey} onChange={e => setLlmApiKey(e.target.value)}
+                  aria-label="LLM API key"
                   placeholder="sk-ant-... or sk-..."
                   className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3 focus:outline-none focus:border-primary/50 text-sm font-mono" />
                 <p className="text-xs text-muted">Stored securely per-user. Used for extension auto-reply generation.</p>

@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
+import EmptyState from '@/components/EmptyState';
+import { useToast } from '@/components/ToastProvider';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 interface Topic {
   id: string;
@@ -11,16 +14,6 @@ interface Topic {
   created_at: string;
 }
 
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
-}
-
 export default function TopicsPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +21,7 @@ export default function TopicsPage() {
   const [newKeyword, setNewKeyword] = useState('');
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
+  const { showToast } = useToast();
 
   const fetchTopics = useCallback(async () => {
     setLoading(true);
@@ -53,13 +47,15 @@ export default function TopicsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setTopics(prev => [...prev, data.data]);
+        await fetchTopics();
         setNewKeyword('');
         setShowModal(false);
+        showToast('Topic added successfully', 'success');
       } else {
         setError(data.error || 'Failed to add topic');
+        showToast(data.error || 'Failed to add topic', 'error');
       }
-    } catch { setError('Network error'); }
+    } catch { setError('Network error'); showToast('Network error while adding topic', 'error'); }
     setAdding(false);
   };
 
@@ -71,7 +67,10 @@ export default function TopicsPage() {
         body: JSON.stringify({ is_active: !current }),
       });
       const data = await res.json();
-      if (data.success) setTopics(prev => prev.map(t => t.id === id ? data.data : t));
+      if (data.success) {
+        setTopics(prev => prev.map(t => t.id === id ? data.data : t));
+        showToast(`Topic ${data.data.is_active ? 'activated' : 'paused'}`, 'info');
+      }
     } catch {}
   };
 
@@ -79,7 +78,10 @@ export default function TopicsPage() {
     if (!confirm('Delete this topic?')) return;
     try {
       const res = await fetch(`/api/topics/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-      if (res.ok) setTopics(prev => prev.filter(t => t.id !== id));
+      if (res.ok) {
+        setTopics(prev => prev.filter(t => t.id !== id));
+        showToast('Topic deleted', 'info');
+      }
     } catch {}
   };
 
@@ -113,6 +115,8 @@ export default function TopicsPage() {
                 onChange={e => setNewKeyword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addTopic()}
                 placeholder="e.g. AI Agents, Solana DeFi, SaaS Growth"
+                required
+                aria-label="New topic keyword"
                 autoFocus
                 className="w-full bg-black border border-white/5 rounded-xl px-4 py-3 focus:outline-none focus:border-primary/50 text-sm"
               />
@@ -176,10 +180,12 @@ export default function TopicsPage() {
         )}
 
         {!loading && topics.length === 0 && (
-          <div className="text-center py-20 space-y-4">
-            <span className="material-symbols-outlined text-6xl text-muted/20">topic</span>
-            <p className="text-muted text-sm">No topics yet. Add your first topic to start monitoring.</p>
-          </div>
+          <EmptyState
+            icon="topic"
+            title="No topics yet"
+            description="Add your first topic to start monitoring narratives."
+            action={<button onClick={() => setShowModal(true)} className="text-primary text-sm font-bold hover:text-primary-light">Add First Topic</button>}
+          />
         )}
 
         <div className="p-6 rounded-2xl border border-white/5 bg-[#0A0A0B] space-y-2">

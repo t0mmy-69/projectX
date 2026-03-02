@@ -2,16 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
-}
+import EmptyState from '@/components/EmptyState';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 export default function DraftStudioPage() {
   const [draft, setDraft] = useState('');
@@ -91,11 +83,20 @@ export default function DraftStudioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" style={{ minHeight: 'calc(100vh - 160px)' }}>
         {/* Left: Editor */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
+          {topics.length === 0 && (
+            <EmptyState
+              icon="edit_note"
+              title="Draft studio needs a topic"
+              description="Create at least one topic to generate persona-based drafts."
+              action={<a href="/topics" className="text-primary text-sm font-bold hover:text-primary-light">Go to Topics</a>}
+            />
+          )}
           {/* Topic Selector */}
           <div className="flex items-center gap-3">
             <label className="text-xs font-bold text-muted uppercase tracking-wider flex-shrink-0">Topic:</label>
             {topics.length > 0 ? (
               <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
+                aria-label="Select topic"
                 className="bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary/50 flex-1">
                 {topics.map(t => <option key={t.id} value={t.id}>{t.keyword}</option>)}
               </select>
@@ -123,6 +124,7 @@ export default function DraftStudioPage() {
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              aria-label="Draft editor"
               className="flex-1 bg-transparent p-6 text-base outline-none resize-none leading-relaxed"
               placeholder={topics.length === 0 ? 'Add a topic first, then click Generate...' : 'Click Generate to create a draft, or start typing...'}
               style={{ minHeight: '300px' }}

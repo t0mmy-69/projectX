@@ -3,16 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useRouter } from 'next/navigation';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
-}
+import EmptyState from '@/components/EmptyState';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 interface Post {
   id: string;
@@ -85,10 +77,21 @@ export default function OverviewPage() {
 
         {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <MetricCard title="Topics Active" value={String(topicsCount)} />
-          <MetricCard title="Drafts Ready" value={String(draftsCount)} />
-          <MetricCard title="Viral Score" value={posts.length > 0 ? String(Math.round(posts[0]?.viral_score || 0)) : '—'} trend={posts.length > 0 ? '+12%' : undefined} trendUp={true} />
-          <MetricCard title="Posts Tracked" value={String(posts.length)} />
+          {loading ? (
+            <>
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+            </>
+          ) : (
+            <>
+              <MetricCard title="Topics Active" value={String(topicsCount)} />
+              <MetricCard title="Drafts Ready" value={String(draftsCount)} />
+              <MetricCard title="Viral Score" value={posts.length > 0 ? String(Math.round(posts[0]?.viral_score || 0)) : '—'} trend={posts.length > 0 ? '+12%' : undefined} trendUp={true} />
+              <MetricCard title="Posts Tracked" value={String(posts.length)} />
+            </>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -128,15 +131,26 @@ export default function OverviewPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 border border-dashed border-white/10 rounded-2xl space-y-3">
-              <span className="material-symbols-outlined text-5xl text-muted/20">rss_feed</span>
-              <p className="text-muted text-sm">No posts yet. Add topics to start seeing viral content.</p>
-              <button onClick={() => router.push('/topics')} className="text-primary text-sm font-bold hover:text-primary-light">Add Topics →</button>
-            </div>
+            <EmptyState
+              icon="rss_feed"
+              title="No posts yet"
+              description="Add topics to start seeing viral content."
+              action={<button onClick={() => router.push('/topics')} className="text-primary text-sm font-bold hover:text-primary-light">Add Topics →</button>}
+            />
           )}
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function MetricCardSkeleton() {
+  return (
+    <div className="bg-[#0A0A0B] p-5 rounded-xl border border-white/5">
+      <div className="h-3 w-24 rounded skeleton" />
+      <div className="h-8 w-16 mt-3 rounded skeleton" />
+      <div className="h-3 w-12 mt-3 rounded skeleton" />
+    </div>
   );
 }
 

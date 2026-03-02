@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 interface APIKey {
   id: string;
@@ -27,17 +28,6 @@ export default function AdminAPIKeysPanel() {
   const [formData, setFormData] = useState<KeyInput>({ key_name: '', key_value: '' });
   const [showForm, setShowForm] = useState(false);
 
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    const headers: Record<string, string> = {
-      'x-user-id': 'admin',
-    };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-  };
-
   useEffect(() => {
     fetchKeys();
   }, []);
@@ -46,7 +36,7 @@ export default function AdminAPIKeysPanel() {
     try {
       setLoading(true);
       const response = await fetch('/api/admin/api-keys', {
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(false),
       });
 
       if (!response.ok) {
@@ -75,7 +65,7 @@ export default function AdminAPIKeysPanel() {
       const response = await fetch('/api/admin/api-keys', {
         method: 'POST',
         headers: {
-          ...getAuthHeaders(),
+          ...getAuthHeaders(false),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -108,7 +98,7 @@ export default function AdminAPIKeysPanel() {
       const response = await fetch('/api/admin/api-keys', {
         method: 'PUT',
         headers: {
-          ...getAuthHeaders(),
+          ...getAuthHeaders(false),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -142,7 +132,7 @@ export default function AdminAPIKeysPanel() {
       const response = await fetch('/api/admin/api-keys', {
         method: 'DELETE',
         headers: {
-          ...getAuthHeaders(),
+          ...getAuthHeaders(false),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ key_name: keyName }),

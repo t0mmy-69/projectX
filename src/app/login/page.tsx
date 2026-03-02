@@ -12,6 +12,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
+    const demoEnabled = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNT === 'true';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,6 +53,9 @@ export default function LoginPage() {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             placeholder="name@company.com"
+                            autoComplete="email"
+                            required
+                            aria-label="Email address"
                             className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm"
                         />
                     </div>
@@ -62,8 +66,16 @@ export default function LoginPage() {
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             placeholder="••••••••"
+                            autoComplete="current-password"
+                            required
+                            aria-label="Password"
                             className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm"
                         />
+                    </div>
+                    <div className="text-right -mt-1">
+                        <a href="mailto:support@narrativeos.app?subject=Reset%20Password" className="text-xs text-primary hover:text-primary-light font-bold">
+                            Forgot password?
+                        </a>
                     </div>
                     <button
                         type="submit"
@@ -90,33 +102,35 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        disabled={loading}
-                        onClick={async () => {
-                            setLoading(true);
-                            setError('');
-                            try {
-                                const res = await fetch('/api/demo');
-                                const data = await res.json();
-                                if (data.success) {
-                                    localStorage.setItem('narrativeOS_auth', JSON.stringify({
-                                        id: data.data.user_id,
-                                        email: data.data.email,
-                                        name: data.data.name,
-                                        token: data.data.token,
-                                    }));
-                                    router.push('/dashboard');
-                                } else {
-                                    setError('Demo setup failed');
-                                }
-                            } catch { setError('Network error'); }
-                            setLoading(false);
-                        }}
-                        className="w-full py-3 bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 rounded-xl font-bold text-sm transition-all duration-300 text-muted disabled:opacity-50"
-                    >
-                        ⚡ Try Demo Account
-                    </button>
+                    {demoEnabled && (
+                        <button
+                            type="button"
+                            disabled={loading}
+                            onClick={async () => {
+                                setLoading(true);
+                                setError('');
+                                try {
+                                    const res = await fetch('/api/demo');
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        localStorage.setItem('narrativeOS_auth', JSON.stringify({
+                                            id: data.data.user_id,
+                                            email: data.data.email,
+                                            name: data.data.name,
+                                            token: data.data.token,
+                                        }));
+                                        router.push('/dashboard');
+                                    } else {
+                                        setError(data.error || 'Demo setup failed');
+                                    }
+                                } catch { setError('Network error'); }
+                                setLoading(false);
+                            }}
+                            className="w-full py-3 bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 rounded-xl font-bold text-sm transition-all duration-300 text-muted disabled:opacity-50"
+                        >
+                            ⚡ Try Demo Account
+                        </button>
+                    )}
                 </form>
 
                 <p className="text-center mt-8 text-xs text-muted font-medium">

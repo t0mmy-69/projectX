@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateExtensionToken } from '@/lib/extensionAuth';
 import { memoryDB } from '@/lib/db';
-import { getUserId } from '@/lib/getUser';
 
 // POST /api/extension/draft - Generate draft for extension
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('x-extension-token');
-    const userId = getUserId(request);
-
-    if (!token || !userId) {
+    if (!token) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const validation = validateExtensionToken(token);
-    if (!validation.valid) {
+    if (!validation.valid || !validation.userId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+    const userId = validation.userId;
 
     const body = await request.json();
     const { context = '', topic_id } = body;
 
     // Get user topics
-    const userTopics = Array.from(memoryDB.topics.values()).filter(t => t.user_id === userId && t.is_active);
+    const userTopics = Array.from(memoryDB.topics.values()).filter(
+      t => t.user_id === userId && t.is_active && (!topic_id || t.id === topic_id)
+    );
     
     // Get persona
     const persona = memoryDB.personas.get(userId);
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
         draft,
         context_used: !!context,
         topic: userTopics[0]?.keyword,
+        persona_tone: persona?.tone || 'professional',
       }
     });
   } catch (error) {

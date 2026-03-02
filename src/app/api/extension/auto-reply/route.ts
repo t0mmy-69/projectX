@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateExtensionToken } from '@/lib/extensionAuth';
 import { memoryDB } from '@/lib/db';
-import { getUserId } from '@/lib/getUser';
+import { checkAutoReplySafety, recordSentReply } from '@/lib/autoReplaySafety';
 
 // POST /api/extension/auto-reply - Generate auto-reply for a tweet
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('x-extension-token');
-    const userId = getUserId(request);
-
-    if (!token || !userId) {
+    if (!token) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const validation = validateExtensionToken(token);
-    if (!validation.valid) {
+    if (!validation.valid || !validation.userId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+    const userId = validation.userId;
 
     const body = await request.json();
-    const { tweet_text = '', tweet_author = '' } = body;
+    const { tweet_text = '', tweet_author = '', tweet_id = '', send_now = false } = body;
 
     // Get user persona for tone
     const persona = memoryDB.personas.get(userId);
@@ -50,6 +49,26 @@ export async function POST(request: NextRequest) {
       reply = replies[Math.floor(Math.random() * replies.length)];
     }
 
+    const safety = checkAutoReplySafety({
+      userId,
+      postId: tweet_id || `tweet_${Date.now()}`,
+      proposedReply: reply,
+      timestamp: new Date(),
+    });
+
+    if (!safety.isSafe) {
+      return NextResponse.json({
+        success: false,
+        error: safety.reason || 'Reply blocked by safety policy',
+        warnings: safety.warnings,
+      }, { status: 429 });
+    }
+
+    const resolvedPostId = tweet_id || `tweet_${Date.now()}`;
+    if (send_now) {
+      recordSentReply(userId, resolvedPostId, reply);
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -57,6 +76,8 @@ export async function POST(request: NextRequest) {
         persona_tone: tone,
         used_llm: hasLLMKey,
         tweet_author,
+        requires_manual_confirm: !send_now,
+        warnings: safety.warnings,
       }
     });
   } catch (error) {

@@ -23,6 +23,9 @@
       }
     ],
     "paths": {
+      "framer-motion": [
+        "./src/shims/framer-motion"
+      ],
       "@/*": [
         "./src/*"
       ]

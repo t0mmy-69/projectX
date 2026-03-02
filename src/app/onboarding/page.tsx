@@ -2,22 +2,14 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
-}
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [topicInput, setTopicInput] = useState('');
   const [topics, setTopics] = useState<string[]>([]);
   const [xHandle, setXHandle] = useState('');
+  const [selectedKols, setSelectedKols] = useState<string[]>([]);
   const [extensionToken, setExtensionToken] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -58,6 +50,19 @@ export default function OnboardingPage() {
     setLoading(false);
     setStep(4);
   }, [xHandle]);
+
+  const continueStep2 = useCallback(async () => {
+    setLoading(true);
+    try {
+      await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ tracked_kols: selectedKols }),
+      });
+    } catch {}
+    setLoading(false);
+    setStep(3);
+  }, [selectedKols]);
 
   const generateToken = useCallback(async () => {
     setLoading(true);
@@ -111,6 +116,7 @@ export default function OnboardingPage() {
               <div className="space-y-4">
                 <input type="text" value={topicInput} onChange={e => setTopicInput(e.target.value)}
                   placeholder="e.g. AI Agents, Solana DeFi, SaaS Growth"
+                  aria-label="Topics input"
                   className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all" />
                 <div className="flex flex-wrap gap-2">
                   {QUICK_TOPICS.map(tag => (
@@ -139,19 +145,27 @@ export default function OnboardingPage() {
               </div>
               <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
                 {KOLS.map(kol => (
-                  <div key={kol.handle} className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-xl border border-white/5 hover:border-primary/30 transition-all duration-300">
+                  <button
+                    key={kol.handle}
+                    type="button"
+                    onClick={() => setSelectedKols(prev => prev.includes(kol.handle) ? prev.filter(h => h !== kol.handle) : [...prev, kol.handle])}
+                    className={`w-full text-left flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${selectedKols.includes(kol.handle) ? 'bg-primary/10 border-primary/40' : 'bg-white/[0.03] border-white/5 hover:border-primary/30'}`}
+                  >
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex-shrink-0" />
                     <div>
                       <p className="text-sm font-bold">{kol.name}</p>
                       <p className="text-[10px] text-muted">{kol.handle} • {kol.niche}</p>
                     </div>
-                  </div>
+                    {selectedKols.includes(kol.handle) && (
+                      <span className="material-symbols-outlined text-primary ml-auto text-sm">check_circle</span>
+                    )}
+                  </button>
                 ))}
               </div>
               <div className="flex gap-3">
                 <button onClick={skip} className="px-4 py-4 border border-white/5 hover:bg-white/5 rounded-xl font-bold text-sm transition-all text-muted">Skip</button>
-                <button onClick={() => setStep(3)} className="flex-1 py-4 bg-primary hover:bg-primary-light rounded-xl font-bold transition-all duration-300 shadow-[0_0_25px_rgba(129,74,200,0.25)]">
-                  Continue
+                <button onClick={continueStep2} disabled={loading} className="flex-1 py-4 bg-primary hover:bg-primary-light rounded-xl font-bold transition-all duration-300 shadow-[0_0_25px_rgba(129,74,200,0.25)] disabled:opacity-50">
+                  {loading ? 'Saving...' : 'Continue'}
                 </button>
               </div>
             </div>
@@ -167,6 +181,7 @@ export default function OnboardingPage() {
                 <div className="flex gap-2">
                   <span className="bg-[#0A0A0B] border border-white/5 rounded-l-xl px-4 py-3.5 text-muted border-r-0 font-bold">@</span>
                   <input type="text" value={xHandle} onChange={e => setXHandle(e.target.value)} placeholder="username"
+                    aria-label="X username"
                     className="flex-1 bg-[#0A0A0B] border border-white/5 rounded-r-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all" />
                 </div>
                 <p className="text-xs text-muted text-center">Optional — you can set this later in Settings.</p>

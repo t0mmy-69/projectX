@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
+import EmptyState from '@/components/EmptyState';
+import { useToast } from '@/components/ToastProvider';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 interface Rule {
   id: string;
@@ -10,16 +13,6 @@ interface Rule {
   action_type: string;
   is_active: boolean;
   created_at: string;
-}
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
 }
 
 const CONDITION_TYPES = ['viral_score', 'category_match', 'likes_threshold'];
@@ -33,6 +26,7 @@ export default function AutomationPage() {
   const [form, setForm] = useState({ condition_type: 'viral_score', condition_value: '90', action_type: 'auto_reply' });
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
+  const { showToast } = useToast();
 
   const fetchRules = useCallback(async () => {
     setLoading(true);
@@ -60,10 +54,12 @@ export default function AutomationPage() {
         setRules(prev => [...prev, data.data]);
         setShowModal(false);
         setForm({ condition_type: 'viral_score', condition_value: '90', action_type: 'auto_reply' });
+        showToast('Automation rule added', 'success');
       } else {
         setError(data.error || 'Failed to add rule');
+        showToast(data.error || 'Failed to add rule', 'error');
       }
-    } catch { setError('Network error'); }
+    } catch { setError('Network error'); showToast('Network error while adding rule', 'error'); }
     setAdding(false);
   };
 
@@ -75,7 +71,10 @@ export default function AutomationPage() {
         body: JSON.stringify({ is_active: !current }),
       });
       const data = await res.json();
-      if (data.success) setRules(prev => prev.map(r => r.id === id ? data.data : r));
+      if (data.success) {
+        setRules(prev => prev.map(r => r.id === id ? data.data : r));
+        showToast(`Rule ${data.data.is_active ? 'activated' : 'paused'}`, 'info');
+      }
     } catch {}
   };
 
@@ -83,7 +82,10 @@ export default function AutomationPage() {
     if (!confirm('Delete this rule?')) return;
     try {
       const res = await fetch(`/api/automation/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-      if (res.ok) setRules(prev => prev.filter(r => r.id !== id));
+      if (res.ok) {
+        setRules(prev => prev.filter(r => r.id !== id));
+        showToast('Rule deleted', 'info');
+      }
     } catch {}
   };
 
@@ -131,6 +133,7 @@ export default function AutomationPage() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted uppercase tracking-wider">IF Condition</label>
                 <select value={form.condition_type} onChange={e => setForm(f => ({ ...f, condition_type: e.target.value }))}
+                  aria-label="Condition type"
                   className="w-full bg-black border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50">
                   {CONDITION_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
                 </select>
@@ -142,6 +145,8 @@ export default function AutomationPage() {
                 </label>
                 <input type="text" value={form.condition_value}
                   onChange={e => setForm(f => ({ ...f, condition_value: e.target.value }))}
+                  required
+                  aria-label="Condition value"
                   placeholder={form.condition_type === 'category_match' ? 'e.g. breaking_news' : 'e.g. 90'}
                   className="w-full bg-black border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50" />
               </div>
@@ -149,6 +154,7 @@ export default function AutomationPage() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-muted uppercase tracking-wider">THEN Action</label>
                 <select value={form.action_type} onChange={e => setForm(f => ({ ...f, action_type: e.target.value }))}
+                  aria-label="Action type"
                   className="w-full bg-black border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50">
                   {ACTION_TYPES.map(t => <option key={t} value={t}>{actionLabel(t)}</option>)}
                 </select>
@@ -186,11 +192,12 @@ export default function AutomationPage() {
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : rules.length === 0 ? (
-            <div className="text-center py-16 space-y-3 border border-dashed border-white/10 rounded-2xl">
-              <span className="material-symbols-outlined text-5xl text-muted/20">smart_toy</span>
-              <p className="text-muted text-sm">No automation rules yet.</p>
-              <button onClick={() => setShowModal(true)} className="text-primary text-sm font-bold hover:text-primary-light">+ Add your first rule</button>
-            </div>
+            <EmptyState
+              icon="smart_toy"
+              title="No automation rules yet"
+              description="Define rules to auto-reply or get strategic suggestions."
+              action={<button onClick={() => setShowModal(true)} className="text-primary text-sm font-bold hover:text-primary-light">+ Add your first rule</button>}
+            />
           ) : (
             <div className="space-y-4">
               {rules.map(rule => (

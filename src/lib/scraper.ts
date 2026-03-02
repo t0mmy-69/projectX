@@ -70,6 +70,7 @@ function getMockPosts(limit: number): any[] {
 export async function scrapePostsForTopic(config: ScraperConfig): Promise<ScrapedPost[]> {
   const { topicId, keyword, limit = 10 } = config;
   const scrapedPosts: ScrapedPost[] = [];
+  const mockAllowed = process.env.NODE_ENV !== 'production' || process.env.ALLOW_MOCK_SCRAPER === 'true';
 
   // Try X API first if available
   const useXAPI = process.env.USE_X_API === 'true' && await isXAPIAvailable();
@@ -94,13 +95,22 @@ export async function scrapePostsForTopic(config: ScraperConfig): Promise<Scrape
         };
       });
     } catch (error) {
-      console.warn('[Scraper] X API error, falling back to mock data:', error);
-      selectedPosts = getMockPosts(limit);
+      if (mockAllowed) {
+        console.warn('[Scraper] X API error, falling back to mock data:', error);
+        selectedPosts = getMockPosts(limit);
+      } else {
+        console.error('[Scraper] X API error in production mode:', error);
+        return [];
+      }
     }
   } else {
-    // Use mock data
-    console.log('[Scraper] Using mock data fallback');
-    selectedPosts = getMockPosts(limit);
+    if (mockAllowed) {
+      console.log('[Scraper] Using mock data fallback');
+      selectedPosts = getMockPosts(limit);
+    } else {
+      console.warn('[Scraper] X API unavailable and mock fallback disabled');
+      return [];
+    }
   }
 
   const now = new Date();
@@ -108,16 +118,16 @@ export async function scrapePostsForTopic(config: ScraperConfig): Promise<Scrape
   // Add randomness to simulate real engagement variations
   const postsWithVariance = selectedPosts.map(post => ({
     ...post,
-    likes: Math.max(0, post.likes + Math.floor((Math.random() - 0.5) * 50)),
-    reposts: Math.max(0, post.reposts + Math.floor((Math.random() - 0.5) * 25)),
-    replies: Math.max(0, post.replies + Math.floor((Math.random() - 0.5) * 15))
+    likes: post.likes,
+    reposts: post.reposts,
+    replies: post.replies
   }));
 
   for (const post of postsWithVariance) {
     const postId = `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Check if post should be ignored
-    const postedAt = new Date(now.getTime() - Math.random() * 12 * 60 * 60 * 1000); // Posted within last 12 hours
+    const postedAt = post.posted_at || now;
     const metrics = {
       likes: post.likes,
       reposts: post.reposts,

@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "NarrativeOS",
+  "version": "1.0.0",
+  "description": "Turn X Into Your Narrative Weapon - AI-powered drafts and auto-reply for X",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "webRequest",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://twitter.com/*",
+    "https://x.com/*",
+    "https://project-x-lilac.vercel.app/*",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*"
+  ],
+  "background": {
+    "service_worker": "extension/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://twitter.com/*",
+        "https://x.com/*"
+      ],
+      "js": [
+        "extension/content.js"
+      ],
+      "css": [
+        "extension/styles.css"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "extension/popup.html",
+    "default_title": "NarrativeOS",
+    "default_icon": {
+      "16": "extension/dist/extension/assets/icon-16.png",
+      "48": "extension/dist/extension/assets/icon-48.png",
+      "128": "extension/dist/extension/assets/icon-128.png"
+    }
+  },
+  "options_page": "extension/options.html",
+  "icons": {
+    "16": "extension/dist/extension/assets/icon-16.png",
+    "48": "extension/dist/extension/assets/icon-48.png",
+    "128": "extension/dist/extension/assets/icon-128.png"
+  }
+}

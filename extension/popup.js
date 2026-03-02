@@ -1,6 +1,6 @@
 // NarrativeOS Extension Popup Script
 
-const DEFAULT_API_BASE = 'http://localhost:3001/api';
+const DEFAULT_API_BASE = 'https://project-x-lilac.vercel.app/api';
 
 const STORAGE_KEYS = {
   TOKEN: 'narrativeOS_extension_token',
@@ -28,7 +28,22 @@ const elements = {
 
 async function getAPIBase() {
   const result = await chrome.storage.local.get(STORAGE_KEYS.API_BASE);
-  return result[STORAGE_KEYS.API_BASE] || DEFAULT_API_BASE;
+  const stored = result[STORAGE_KEYS.API_BASE];
+  let normalized = normalizeAPIBase(stored || DEFAULT_API_BASE);
+
+  // Migrate old default that points to a non-running local server.
+  if (normalized.includes('localhost:3001')) {
+    normalized = DEFAULT_API_BASE;
+    await chrome.storage.local.set({ [STORAGE_KEYS.API_BASE]: normalized });
+  }
+
+  return normalized;
+}
+
+function normalizeAPIBase(url) {
+  const cleaned = (url || '').trim().replace(/\/+$/, '');
+  if (!cleaned) return DEFAULT_API_BASE;
+  return cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`;
 }
 
 // Initialize
@@ -76,7 +91,7 @@ async function handleAuthentication() {
 
   try {
     const API_BASE = await getAPIBase();
-    const response = await fetch(`${API_BASE}/extension/validate`, {
+    const response = await fetch(`${API_BASE}/extension`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })

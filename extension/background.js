@@ -2,7 +2,7 @@
 // Handles: Token management, API communication, auto-reply execution
 
 // API base URL - reads from storage (set in options), defaults to production
-const DEFAULT_API_BASE = 'http://localhost:3001/api';
+const DEFAULT_API_BASE = 'https://project-x-lilac.vercel.app/api';
 
 const STORAGE_KEYS = {
   TOKEN: 'narrativeOS_extension_token',
@@ -13,7 +13,16 @@ const STORAGE_KEYS = {
 
 async function getAPIBase() {
   const result = await chrome.storage.local.get(STORAGE_KEYS.API_BASE);
-  return result[STORAGE_KEYS.API_BASE] || DEFAULT_API_BASE;
+  const stored = result[STORAGE_KEYS.API_BASE];
+  let normalized = normalizeAPIBase(stored || DEFAULT_API_BASE);
+
+  // Migrate old local default from previous versions.
+  if (normalized.includes('localhost:3001')) {
+    normalized = DEFAULT_API_BASE;
+    await chrome.storage.local.set({ [STORAGE_KEYS.API_BASE]: normalized });
+  }
+
+  return normalized;
 }
 
 // Initialize extension
@@ -56,7 +65,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function validateToken(token) {
   try {
     const API_BASE = await getAPIBase();
-    const response = await fetch(`${API_BASE}/extension/validate`, {
+    const response = await fetch(`${API_BASE}/extension`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })
@@ -86,11 +95,10 @@ async function generateDraft(data) {
       return { success: false, error: 'Not authenticated. Please connect your token first.' };
     }
 
-    const response = await fetch(`${API_BASE}/drafts`, {
+    const response = await fetch(`${API_BASE}/extension/draft`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
         'x-extension-token': token
       },
       body: JSON.stringify(data)
@@ -112,11 +120,10 @@ async function checkAutoReply(data) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const response = await fetch(`${API_BASE}/auto-reply`, {
-      method: 'PUT',
+    const response = await fetch(`${API_BASE}/extension/auto-reply`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
         'x-extension-token': token
       },
       body: JSON.stringify(data)
@@ -136,6 +143,12 @@ async function getStoredToken() {
 async function getStoredUserId() {
   const result = await chrome.storage.local.get(STORAGE_KEYS.USER_ID);
   return result[STORAGE_KEYS.USER_ID];
+}
+
+function normalizeAPIBase(url) {
+  const cleaned = (url || '').trim().replace(/\/+$/, '');
+  if (!cleaned) return DEFAULT_API_BASE;
+  return cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`;
 }
 
 // Periodic sync for auto-reply (every 5 minutes)

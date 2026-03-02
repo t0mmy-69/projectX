@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
         name: user.name,
         subscription_tier: user.subscription_tier,
         x_username: (user as any).x_username,
+        tracked_kols: (user as any).tracked_kols || [],
         persona,
         topics_count: topics.length,
         drafts_count: drafts.length,
@@ -66,7 +67,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, x_username, llm_api_key } = body;
+    const { name, x_username, llm_api_key, tracked_kols } = body;
 
     let user = memoryDB.users.get(userId);
     // Auto-create if not found
@@ -87,6 +88,7 @@ export async function PATCH(request: NextRequest) {
       ...user,
       ...(name && { name }),
       ...(x_username !== undefined && { x_username }),
+      ...(tracked_kols !== undefined && { tracked_kols }),
       ...(llm_api_key !== undefined && { llm_api_key } as any),
       updated_at: new Date(),
     };

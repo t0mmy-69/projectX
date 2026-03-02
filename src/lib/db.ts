@@ -10,6 +10,7 @@ export interface User {
   x_access_token?: string;
   x_refresh_token?: string;
   x_token_expires_at?: Date;
+  tracked_kols?: string[];
   subscription_tier: 'free' | 'creator' | 'agency';
   created_at: Date;
   updated_at: Date;
@@ -143,6 +144,15 @@ export interface ExtensionToken {
   updated_at: Date;
 }
 
+export interface ReplyLog {
+  id: string;
+  user_id: string;
+  post_id: string;
+  reply_text: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface UserAccount {
   id: string;
   user_id: string;
@@ -207,6 +217,7 @@ const _memoryDB = {
   autoReplyRules: new Map<string, AutoReplyRule>(),
   aiLogs: new Map<string, AILog>(),
   extensionTokens: new Map<string, ExtensionToken>(),
+  replyLogs: new Map<string, ReplyLog>(),
   userAccounts: new Map<string, UserAccount>(),
   teams: new Map<string, Team>(),
   teamMembers: new Map<string, TeamMember>(),
@@ -224,6 +235,9 @@ export const memoryDB = global.__narrativeOS_db;
 // Runs at module load time → every serverless instance gets demo data pre-loaded
 // This makes the demo account work reliably on Vercel (stateless serverless)
 (function seedDemoData() {
+  const DEMO_ENABLED = process.env.NODE_ENV !== 'production' || process.env.ENABLE_DEMO_ACCOUNT === 'true';
+  if (!DEMO_ENABLED) return;
+
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require('crypto') as typeof import('crypto');
 

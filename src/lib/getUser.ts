@@ -1,30 +1,31 @@
 // Robust user ID extraction — works without middleware header forwarding
-// Tries: x-user-id header → JWT Bearer token → cookie (in that order)
+// Tries: JWT Bearer token -> extension token -> cookie -> x-user-id (as last fallback)
 
 import { NextRequest } from 'next/server';
+import { validateExtensionToken } from './extensionAuth';
 
 export function getUserId(request: NextRequest): string | null {
-  // 1. Direct header from client (sent by getAuthHeaders() in frontend)
-  const headerUserId = request.headers.get('x-user-id');
-  if (headerUserId) return headerUserId;
-
-  // 2. Decode from JWT Bearer token (doesn't need Node.js crypto — pure base64)
+  // 1. Decode from JWT Bearer token
   const auth = request.headers.get('authorization');
   if (auth?.startsWith('Bearer ')) {
     const uid = decodeUserIdFromJWT(auth.slice(7));
     if (uid) return uid;
   }
 
-  // 3. Extension token
+  // 2. Extension token
   const extToken = request.headers.get('x-extension-token');
   if (extToken) {
-    const uid = decodeUserIdFromJWT(extToken);
-    if (uid) return uid;
+    const validation = validateExtensionToken(extToken);
+    if (validation.valid && validation.userId) return validation.userId;
   }
 
-  // 4. Cookie fallback (set by login/demo endpoints)
+  // 3. Cookie fallback (set by login endpoint)
   const cookie = request.cookies.get('user_id');
   if (cookie?.value) return cookie.value;
+
+  // 4. Header fallback (kept for compatibility with middleware-injected headers)
+  const headerUserId = request.headers.get('x-user-id');
+  if (headerUserId) return headerUserId;
 
   return null;
 }

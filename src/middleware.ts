@@ -39,7 +39,7 @@ const PROTECTED_ROUTES = [
 ];
 
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  return PUBLIC_ROUTES.some(route => route === '/' ? pathname === '/' : pathname.startsWith(route));
 }
 
 function isProtectedRoute(pathname: string): boolean {

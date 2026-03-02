@@ -24,6 +24,25 @@ body {
   letter-spacing: -0.01em;
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(129, 74, 200, 0.8);
+  outline-offset: 2px;
+}
+
+.btn-glow {
+  transition: all 0.25s ease;
+  box-shadow: 0 0 0 rgba(129, 74, 200, 0);
+}
+
+.btn-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 22px rgba(129, 74, 200, 0.3);
+}
+
 .glass-panel {
   background: rgba(10, 10, 11, 0.7);
   backdrop-filter: blur(16px);
@@ -89,4 +108,45 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(129, 74, 200, 0.3);
+}
+
+.toast-enter {
+  animation: toastIn 0.2s ease-out;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageIn 0.22s ease-out;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.04) 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.25s ease infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
 }

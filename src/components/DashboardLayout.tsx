@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 const NAV_ITEMS = [
     { icon: 'dashboard', label: 'Overview', href: '/dashboard' },
@@ -44,9 +45,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const stored = localStorage.getItem('narrativeOS_auth');
         if (stored) {
             try {
-                const u = JSON.parse(stored);
                 fetch('/api/user/profile', {
-                    headers: { Authorization: `Bearer ${u.token}`, 'x-user-id': u.id }
+                    headers: getAuthHeaders(false)
                 }).then(r => r.json()).then(data => {
                     if (data.success) {
                         if (data.data.name && !data.data.name.includes('_')) setUserName(data.data.name);
@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col overflow-hidden bg-black">
-                <header className="h-20 border-b border-white/5 flex items-center justify-between px-10 bg-black/50 backdrop-blur-xl">
+                <header className="h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-10 bg-black/50 backdrop-blur-xl">
                     <h1 className="text-xl font-bold tracking-tight">{pageTitle}</h1>
                     <div className="flex items-center gap-6">
                         <button
@@ -126,13 +126,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </button>
                         <button
                             onClick={() => router.push('/draft-studio')}
-                            className="px-6 py-2.5 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(129,74,200,0.2)]"
+                            className="hidden sm:inline-flex px-6 py-2.5 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(129,74,200,0.2)] btn-glow"
                         >
                             New Narrative
                         </button>
                     </div>
                 </header>
-                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 md:p-10 pb-28 md:pb-10 custom-scrollbar">
                     <div className="max-w-6xl mx-auto">
                         {children}
                     </div>

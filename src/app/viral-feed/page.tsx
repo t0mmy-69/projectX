@@ -3,16 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useRouter } from 'next/navigation';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem('narrativeOS_auth');
-  if (!stored) return {};
-  try {
-    const u = JSON.parse(stored);
-    return { 'Authorization': `Bearer ${u.token}`, 'x-user-id': u.id, 'Content-Type': 'application/json' };
-  } catch { return {}; }
-}
+import EmptyState from '@/components/EmptyState';
+import { useToast } from '@/components/ToastProvider';
+import { getAuthHeaders } from '@/lib/authHeaders';
 
 interface Post {
   id: string;
@@ -32,6 +25,7 @@ export default function ViralFeedPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
+  const { showToast } = useToast();
   const router = useRouter();
 
   const fetchPosts = useCallback(async () => {
@@ -52,6 +46,7 @@ export default function ViralFeedPage() {
       await fetch('/api/scrape', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({}) });
       await new Promise(r => setTimeout(r, 1500));
       await fetchPosts();
+      showToast('Feed refreshed', 'success');
     } catch {}
     setScraping(false);
   };
@@ -97,11 +92,12 @@ export default function ViralFeedPage() {
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredPosts.length === 0 ? (
-          <div className="text-center py-20 space-y-4 border border-dashed border-white/10 rounded-2xl">
-            <span className="material-symbols-outlined text-6xl text-muted/20">rss_feed</span>
-            <p className="text-muted text-sm">No viral posts yet. Add topics and click Refresh to scrape content.</p>
-            <button onClick={() => router.push('/topics')} className="text-primary text-sm font-bold hover:text-primary-light">Add Topics →</button>
-          </div>
+          <EmptyState
+            icon="rss_feed"
+            title="No viral posts yet"
+            description="Add topics and click Refresh to scrape content."
+            action={<button onClick={() => router.push('/topics')} className="text-primary text-sm font-bold hover:text-primary-light">Add Topics →</button>}
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredPosts.map(post => {
