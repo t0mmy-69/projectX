@@ -3,11 +3,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, Team, TeamMember } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/teams - List all teams the user belongs to
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
 // POST /api/teams - Create a new team
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

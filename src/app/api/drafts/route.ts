@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, Draft } from '@/lib/db';
 import { analyzePersona } from '@/lib/personaEngine';
 import { generateContent } from '@/lib/contentGenerator';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/drafts - Get user's drafts
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
 // POST /api/drafts/generate - Generate new draft
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateExtensionToken } from '@/lib/extensionAuth';
 import { memoryDB } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // POST /api/extension/auto-reply - Generate auto-reply for a tweet
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('x-extension-token');
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!token || !userId) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });

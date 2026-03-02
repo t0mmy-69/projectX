@@ -33,7 +33,17 @@
       "Bash(npm install next@15.3.9)",
       "Bash(git commit -m \"fix: upgrade Next.js to 15.3.9 to patch CVE-2025-66478\")",
       "Bash(npm install --save-dev eslint-config-next@15.3.9)",
-      "Bash(git commit -m \"fix: seed demo data at startup, fix middleware JWT extraction, update deps:*)"
+      "Bash(git commit -m \"fix: seed demo data at startup, fix middleware JWT extraction, update deps:*)",
+      "WebFetch(domain:project-ejyyz4hp6-t0mmy-69s-projects.vercel.app)",
+      "Bash(curl -s -w \"\\\\nHTTP_CODE:%{http_code}\" \"https://project-ejyyz4hp6-t0mmy-69s-projects.vercel.app/api/demo\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" \"https://project-x-lilac.vercel.app/api/demo\")",
+      "Bash(BASE=\"https://project-x-lilac.vercel.app\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -X POST \"$BASE/api/auth/login\" -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"demo@narrativeos.app\"\",\"\"password\"\":\"\"demo1234\"\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" \"$BASE/api/topics\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZGVtb191c2VyXzAwMSIsImVtYWlsIjoiZGVtb0BuYXJyYXRpdmVvcy5hcHAiLCJuYW1lIjoiRGVtbyBVc2VyIiwiaWF0IjoxNzcyNDIzMjkzLCJleHAiOjE3NzMwMjgwOTN9.cJ_BlL8krCZT0MWKSsI7qxWQSd4zGcBReMQnVBd7Ia4\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZGVtb191c2VyXzAwMSIsImVtYWlsIjoiZGVtb0BuYXJyYXRpdmVvcy5hcHAiLCJuYW1lIjoiRGVtbyBVc2VyIiwiaWF0IjoxNzcyNDIzMzYyLCJleHAiOjE3NzMwMjgxNjJ9.ywCjcG9m0maa9Ha2mCii5XcU9-847QntlFdw8UDhZO0\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" \"$BASE/api/topics\" -H \"Authorization: Bearer $TOKEN\" -H \"x-user-id: demo_user_001\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -X POST \"$BASE/api/topics\" -H \"Authorization: Bearer $TOKEN\" -H \"x-user-id: demo_user_001\" -H \"Content-Type: application/json\" -d '{\"\"keyword\"\":\"\"Test from API\"\"}')",
+      "Bash(git commit -m \"fix: all API routes now decode JWT directly — no middleware dependency:*)"
     ]
   }
 }

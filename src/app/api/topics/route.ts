@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, Topic } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/topics - List all topics for a user
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
 // POST /api/topics - Create a new topic
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

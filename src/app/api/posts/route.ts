@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, ScrapedPost, ViralScore, PostCategory } from '@/lib/db';
 import { calculateViralScore, shouldIgnorePost, roundViralScore } from '@/lib/viralScore';
 import { classifyPost } from '@/lib/categoryEngine';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/posts - Get viral feed for user's topics
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     const topicId = request.nextUrl.searchParams.get('topic_id');
     const sortBy = request.nextUrl.searchParams.get('sort_by') || 'viral_score'; // viral_score, recent, trending
 
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 // POST /api/posts - Scrape and add posts manually (for testing)
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

@@ -5,10 +5,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/adminCheck';
 import { memoryDB } from '@/lib/db';
 import { getGlobalStats } from '@/lib/tokenTracking';
+import { getUserId } from '@/lib/getUser';
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id') || undefined;
+    const userId = getUserId(request) || undefined;
 
     if (!isAdmin(userId)) {
       return NextResponse.json(

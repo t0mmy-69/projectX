@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/adminCheck';
+import { getUserId } from '@/lib/getUser';
 import {
   listAPIKeys,
   setAPIKey,
@@ -15,7 +16,7 @@ import {
 // GET /api/admin/api-keys - List all API keys
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id') || undefined;
+    const userId = getUserId(request) || undefined;
 
     if (!isAdmin(userId)) {
       return NextResponse.json(
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/api-keys - Set/Update API key
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id') || undefined;
+    const userId = getUserId(request) || undefined;
 
     if (!isAdmin(userId)) {
       return NextResponse.json(
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
 // PUT /api/admin/api-keys - Test API key
 export async function PUT(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id') || undefined;
+    const userId = getUserId(request) || undefined;
 
     if (!isAdmin(userId)) {
       return NextResponse.json(
@@ -171,7 +172,7 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/admin/api-keys - Delete API key
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id') || undefined;
+    const userId = getUserId(request) || undefined;
 
     if (!isAdmin(userId)) {
       return NextResponse.json(

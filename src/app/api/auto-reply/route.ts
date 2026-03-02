@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, AutoReplyRule } from '@/lib/db';
 import { checkAutoReplySafety, getReplyRecommendation } from '@/lib/autoReplaySafety';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/auto-reply - Get user's auto-reply rules
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
 // POST /api/auto-reply - Create or update auto-reply rule
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
 // POST /api/auto-reply/validate - Validate a proposed reply before sending
 export async function PUT(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

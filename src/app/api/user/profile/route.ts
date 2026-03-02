@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/user/profile - Get user profile
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     const userEmail = request.headers.get('x-user-email');
     const userName = request.headers.get('x-user-name');
 
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
 // PATCH /api/user/profile - Update user profile
 export async function PATCH(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     const userEmail = request.headers.get('x-user-email');
     const userName = request.headers.get('x-user-name');
 

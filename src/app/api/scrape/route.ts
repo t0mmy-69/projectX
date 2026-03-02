@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scrapePostsForTopic, scrapeAllUserTopics } from '@/lib/scraper';
+import { getUserId } from '@/lib/getUser';
 
 // POST /api/scrape - Trigger scraping for a specific topic or all user topics
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     const apiKey = request.headers.get('x-api-key');
 
     // Optional: require API key for cron job triggers

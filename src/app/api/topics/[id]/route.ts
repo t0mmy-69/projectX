@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // PATCH /api/topics/[id] - Update a topic
 export async function PATCH(
@@ -8,7 +9,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 401 });
     }
@@ -41,7 +42,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 401 });
     }

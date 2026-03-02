@@ -5,11 +5,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, ScrapedPost } from '@/lib/db';
 import { detectNarratives, detectNarrativeShifts } from '@/lib/narrativeDetector';
 import { analyzeConversationSentiment } from '@/lib/sentimentAnalyzer';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/narratives - List detected narratives
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
 // POST /api/narratives - Detect narrative shifts
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

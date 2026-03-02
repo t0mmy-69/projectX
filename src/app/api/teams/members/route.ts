@@ -3,11 +3,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, TeamMember, Team } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/teams/members?team_id=xxx - List team members
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     const teamId = request.nextUrl.searchParams.get('team_id');
 
     if (!userId || !teamId) {
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
 // POST /api/teams/members - Add a team member
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
     const body = await request.json();
     const { team_id, member_user_id, role } = body;
 

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateExtensionToken, validateExtensionToken, revokeExtensionToken } from '@/lib/extensionAuth';
+import { getUserId } from '@/lib/getUser';
 
 // POST /api/extension/token - Generate extension token
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

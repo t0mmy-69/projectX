@@ -5,11 +5,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB } from '@/lib/db';
 import { analyzeConversationSentiment, analyzePostSentiment } from '@/lib/sentimentAnalyzer';
 import { getTokenStats } from '@/lib/tokenTracking';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/analytics - Get analytics dashboard data
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(

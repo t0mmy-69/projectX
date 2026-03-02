@@ -3,11 +3,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryDB, Workspace, Team } from '@/lib/db';
+import { getUserId } from '@/lib/getUser';
 
 // GET /api/workspaces - List all workspaces user has access to
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
 // POST /api/workspaces - Create a new workspace
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = getUserId(request);
 
     if (!userId) {
       return NextResponse.json(
