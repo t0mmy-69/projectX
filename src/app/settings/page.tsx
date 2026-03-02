@@ -18,9 +18,7 @@ const PROVIDER_INFO: Record<LLMProvider, { label: string; icon: string; placehol
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('Persona');
   const [profile, setProfile] = useState<any>(null);
-  const [extensionToken, setExtensionToken] = useState('');
-  const [tokenGenerating, setTokenGenerating] = useState(false);
-  const [tokenCopied, setTokenCopied] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
   const [xHandle, setXHandle] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
@@ -59,21 +57,12 @@ export default function SettingsPage() {
     loadLLMKeys();
   }, [loadProfile, loadLLMKeys]);
 
-  const generateToken = async () => {
-    setTokenGenerating(true);
-    try {
-      const res = await fetch('/api/extension', { method: 'POST', headers: getAuthHeaders() });
-      const data = await res.json();
-      if (data.success) setExtensionToken(data.data.token);
-    } catch {}
-    setTokenGenerating(false);
-  };
-
-  const copyToken = () => {
-    if (!extensionToken) return;
-    navigator.clipboard.writeText(extensionToken);
-    setTokenCopied(true);
-    setTimeout(() => setTokenCopied(false), 2000);
+  const copyEmail = () => {
+    const email = profile?.email || '';
+    if (!email) return;
+    navigator.clipboard.writeText(email);
+    setEmailCopied(true);
+    setTimeout(() => setEmailCopied(false), 2000);
   };
 
   const saveLLMKey = async (provider: LLMProvider) => {
@@ -214,42 +203,62 @@ export default function SettingsPage() {
                   <span className="material-symbols-outlined text-3xl">extension</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold">Extension Connection</h3>
-                  <p className="text-xs text-muted">Generate a token to connect the Chrome Extension</p>
+                  <h3 className="text-lg font-bold">Chrome Extension</h3>
+                  <p className="text-xs text-muted">Sign in to the extension with your NarrativeOS account</p>
                 </div>
               </div>
 
               <div className="space-y-4">
+                {/* Login credentials hint */}
                 <div className="p-4 bg-[#0A0A0B] border border-white/5 rounded-xl">
-                  <div className="text-[10px] text-muted uppercase font-black mb-3 tracking-wider">Connection Token</div>
-                  {extensionToken ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between bg-black/60 p-3 rounded-lg border border-primary/20">
-                        <code className="text-xs font-mono text-primary truncate flex-1">{extensionToken}</code>
-                        <button onClick={copyToken} className="ml-2 flex-shrink-0 flex items-center gap-1 text-xs text-muted hover:text-white transition-colors">
-                          <span className="material-symbols-outlined text-sm">{tokenCopied ? 'check' : 'content_copy'}</span>
-                          {tokenCopied ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                      <p className="text-xs text-muted">Paste this token in the NarrativeOS Extension popup → Connect.</p>
-                      <button onClick={generateToken} className="text-xs text-primary hover:text-primary-light font-bold">Generate new token</button>
+                  <div className="text-[10px] text-muted uppercase font-black mb-3 tracking-wider">Your Login Credentials</div>
+                  <div className="flex items-center justify-between bg-black/60 p-3 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="material-symbols-outlined text-sm text-primary flex-shrink-0">person</span>
+                      <code className="text-xs font-mono text-primary truncate">{profile?.email || 'demo@narrativeos.app'}</code>
                     </div>
-                  ) : (
-                    <button onClick={generateToken} disabled={tokenGenerating}
-                      className="w-full py-4 bg-primary/10 border border-primary/20 hover:bg-primary/20 rounded-xl text-primary font-bold transition-colors disabled:opacity-50">
-                      {tokenGenerating ? 'Generating...' : '⚡ Generate Extension Token'}
+                    <button onClick={copyEmail} className="ml-2 flex-shrink-0 flex items-center gap-1 text-xs text-muted hover:text-white transition-colors">
+                      <span className="material-symbols-outlined text-sm">{emailCopied ? 'check' : 'content_copy'}</span>
+                      {emailCopied ? 'Copied!' : 'Copy'}
                     </button>
-                  )}
+                  </div>
+                  <p className="text-xs text-muted mt-2">Use these credentials to sign in to the extension popup.</p>
                 </div>
 
+                {/* How to Connect */}
                 <div className="p-4 bg-[#0A0A0B] border border-white/5 rounded-xl space-y-3">
-                  <h4 className="text-sm font-bold">How to Connect</h4>
-                  <ol className="text-xs text-muted space-y-2 list-none">
-                    <li className="flex items-start gap-2"><span className="text-primary font-bold flex-shrink-0">1.</span> Install the NarrativeOS Chrome Extension</li>
-                    <li className="flex items-start gap-2"><span className="text-primary font-bold flex-shrink-0">2.</span> Generate a token above</li>
-                    <li className="flex items-start gap-2"><span className="text-primary font-bold flex-shrink-0">3.</span> Click the extension icon → Paste token → Connect</li>
-                    <li className="flex items-start gap-2"><span className="text-primary font-bold flex-shrink-0">4.</span> Go to twitter.com/x.com — extension is now active!</li>
+                  <h4 className="text-sm font-bold">How to Set Up</h4>
+                  <ol className="text-xs text-muted space-y-3 list-none">
+                    <li className="flex items-start gap-3">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">1</span>
+                      <span>Install the <strong className="text-white">NarrativeOS Chrome Extension</strong> in your browser</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">2</span>
+                      <span>Click the <strong className="text-white">extension icon</strong> in your browser toolbar and sign in with your email &amp; password</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">3</span>
+                      <span>Add your <strong className="text-white">LLM API key</strong> in the API Keys tab above, then create an Agent in the Agents page</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">4</span>
+                      <span>In the extension, <strong className="text-white">select your agent</strong> and toggle <strong className="text-white">Auto-Reply ON</strong></span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">5</span>
+                      <span>Go to <strong className="text-white">x.com</strong> — the extension will scan your feed and auto-reply to matching posts! 🚀</span>
+                    </li>
                   </ol>
+                </div>
+
+                {/* Status indicator */}
+                <div className="flex items-center gap-3 p-3 bg-green-500/5 border border-green-500/15 rounded-xl">
+                  <span className="material-symbols-outlined text-green-400 text-lg">check_circle</span>
+                  <div>
+                    <p className="text-xs font-bold text-green-400">Account Ready</p>
+                    <p className="text-[10px] text-muted">Your account is set up and ready to use with the extension.</p>
+                  </div>
                 </div>
               </div>
             </div>

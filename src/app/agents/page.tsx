@@ -224,7 +224,7 @@ export default function AgentsPage() {
         {/* Tabs */}
         <div className="flex border-b border-white/5 gap-8">
           {(['agents', 'activity'] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
+            <button key={tab} onClick={() => { setActiveTab(tab); if (tab === 'activity') fetchDecisions(); }}
               className={`pb-4 text-sm font-bold transition-all relative capitalize ${activeTab === tab ? 'text-white' : 'text-muted hover:text-white'}`}>
               {tab === 'agents' ? `Agents (${agents.length})` : `Activity (${decisions.length})`}
               {activeTab === tab && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary shadow-[0_0_10px_rgba(129,74,200,0.5)]" />}
