@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(lsof -i :3000)",
+      "Bash(lsof -ti :3000)",
+      "Bash(xargs kill -9)",
+      "Bash(cat:*)",
+      "Bash(npx next build)",
+      "Bash(node build.js)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run build)",
+      "Bash(git init)",
+      "Bash(git add .)",
+      "Bash(git commit -m \"Initial commit: NarrativeOS MVP - fully functional dashboard\")"
+    ]
+  }
+}

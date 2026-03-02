@@ -1,0 +1,128 @@
+"use client";
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+
+export default function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
+    const router = useRouter();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) { setError('Please fill in all fields'); return; }
+        setLoading(true);
+        setError('');
+        const result = await login(email, password);
+        setLoading(false);
+        if (result.success) {
+            router.push('/dashboard');
+        } else {
+            setError(result.error || 'Login failed');
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            <div className="hero-glow !top-1/2 !-translate-y-1/2"></div>
+            <div className="w-full max-w-md relative z-10">
+                <div className="text-center mb-10">
+                    <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(129,74,200,0.3)] mx-auto mb-6">
+                        <span className="material-symbols-outlined text-white text-3xl">auto_awesome</span>
+                    </div>
+                    <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Welcome Back</h1>
+                    <p className="text-muted text-sm font-medium">Enter your credentials to access your narrative.</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {error && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted uppercase tracking-wider">Email Address</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            placeholder="name@company.com"
+                            className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted uppercase tracking-wider">Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full bg-[#0A0A0B] border border-white/5 rounded-xl px-4 py-3.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all text-sm"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3.5 bg-primary hover:bg-primary-light rounded-xl font-bold text-sm transition-all duration-300 shadow-[0_0_25px_rgba(129,74,200,0.25)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {loading ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                Signing in...
+                            </>
+                        ) : 'Sign In'}
+                    </button>
+
+                    <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-white/5"></div>
+                        </div>
+                        <div className="relative flex justify-center text-[10px] uppercase font-black">
+                            <span className="bg-black px-3 text-muted tracking-[0.2em]">Or</span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={async () => {
+                            setLoading(true);
+                            setError('');
+                            try {
+                                const res = await fetch('/api/demo');
+                                const data = await res.json();
+                                if (data.success) {
+                                    localStorage.setItem('narrativeOS_auth', JSON.stringify({
+                                        id: data.data.user_id,
+                                        email: data.data.email,
+                                        name: data.data.name,
+                                        token: data.data.token,
+                                    }));
+                                    router.push('/dashboard');
+                                } else {
+                                    setError('Demo setup failed');
+                                }
+                            } catch { setError('Network error'); }
+                            setLoading(false);
+                        }}
+                        className="w-full py-3 bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 rounded-xl font-bold text-sm transition-all duration-300 text-muted disabled:opacity-50"
+                    >
+                        ⚡ Try Demo Account
+                    </button>
+                </form>
+
+                <p className="text-center mt-8 text-xs text-muted font-medium">
+                    Don&apos;t have an account? <Link href="/signup" className="text-primary font-bold hover:text-primary-light transition-colors">Start for free</Link>
+                </p>
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NarrativeOS — Extension Settings</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #060606;
+      color: #e5e5e5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      background: #814ac8;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 24px rgba(129,74,200,0.4);
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .header p { font-size: 13px; color: #555; margin-top: 2px; }
+
+    /* Section */
+    .section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 6px;
+    }
+
+    .field-sub {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    input[type="url"], input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 9px;
+      color: #f1f1f1;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: rgba(129,74,200,0.6); }
+    input::placeholder { color: #3a3a3a; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #814ac8;
+      color: white;
+      box-shadow: 0 0 16px rgba(129,74,200,0.25);
+    }
+
+    .btn-primary:hover { background: #9b6cd8; }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.07);
+      color: #aaa;
+      border: 1px solid rgba(255,255,255,0.09);
+      margin-left: 8px;
+    }
+
+    .btn-secondary:hover { background: rgba(255,255,255,0.11); color: #ddd; }
+
+    /* Status messages */
+    .message {
+      margin-top: 10px;
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    .message.success { color: #86efac; }
+    .message.error { color: #fca5a5; }
+
+    /* Info box */
+    .info-box {
+      background: rgba(129,74,200,0.06);
+      border: 1px solid rgba(129,74,200,0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .info-box strong { color: #c4a6e8; }
+
+    /* Status indicator */
+    .conn-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 9px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #333;
+      flex-shrink: 0;
+    }
+
+    .dot.ok { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .dot.err { background: #ef4444; }
+
+    a { color: #814ac8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">✦</div>
+    <div>
+      <h1>NarrativeOS</h1>
+      <p>Extension Settings</p>
+    </div>
+  </div>
+
+  <!-- API Configuration -->
+  <div class="section">
+    <div class="section-title">Server Configuration</div>
+
+    <div class="field">
+      <label for="api-base-input">API Base URL</label>
+      <div class="field-sub">URL of your NarrativeOS server (dev: localhost:3001)</div>
+      <input
+        type="url"
+        id="api-base-input"
+        placeholder="http://localhost:3001/api"
+        spellcheck="false"
+      />
+    </div>
+
+    <div style="display:flex;align-items:center;gap:0;">
+      <button class="btn btn-primary" id="save-btn">Save Settings</button>
+      <button class="btn btn-secondary" id="test-btn">Test Connection</button>
+    </div>
+
+    <div id="save-message" class="message"></div>
+
+    <div class="conn-status" style="margin-top:14px;">
+      <div class="dot" id="conn-dot"></div>
+      <span id="conn-text">Not tested</span>
+    </div>
+  </div>
+
+  <!-- How to get token -->
+  <div class="section">
+    <div class="section-title">How to Connect</div>
+    <div class="info-box">
+      <strong>Step 1:</strong> Start your NarrativeOS server<br>
+      <strong>Step 2:</strong> Go to <strong>Settings → Extension</strong> tab in the dashboard<br>
+      <strong>Step 3:</strong> Copy your extension token<br>
+      <strong>Step 4:</strong> Paste it in the extension popup and click Connect<br><br>
+      For local dev, the default API URL is <strong>http://localhost:3001/api</strong>
+    </div>
+  </div>
+
+  <!-- Debug info -->
+  <div class="section">
+    <div class="section-title">Debug Info</div>
+    <div id="debug-info" style="font-size:11px;color:#444;font-family:monospace;line-height:1.7;"></div>
+  </div>
+
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NarrativeOS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #080808;
+      color: #f1f1f1;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      background: #814ac8;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(129,74,200,0.4);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .header-text p {
+      font-size: 10px;
+      color: #666;
+      margin-top: 1px;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.connected { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .status-dot.disconnected { background: #ef4444; }
+
+    #status-text {
+      font-size: 11px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    /* Body content */
+    .body {
+      padding: 16px 18px;
+    }
+
+    /* Auth section */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    input[type="password"], input[type="text"], input[type="url"] {
+      width: 100%;
+      padding: 9px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #f1f1f1;
+      font-size: 12px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 8px;
+    }
+
+    input:focus {
+      border-color: rgba(129,74,200,0.5);
+    }
+
+    input::placeholder { color: #444; }
+
+    .btn {
+      width: 100%;
+      padding: 9px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #814ac8;
+      color: white;
+      box-shadow: 0 0 16px rgba(129,74,200,0.25);
+    }
+
+    .btn-primary:hover { background: #9b6cd8; }
+    .btn-primary:disabled { background: #3a3a3a; color: #666; cursor: not-allowed; box-shadow: none; }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: #aaa;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-top: 6px;
+    }
+
+    .btn-secondary:hover { background: rgba(255,255,255,0.09); color: #ddd; }
+
+    .btn-danger {
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.2);
+      margin-top: 6px;
+    }
+
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+    /* Message */
+    .message {
+      font-size: 11px;
+      min-height: 16px;
+      margin-top: 6px;
+      padding: 0 2px;
+    }
+
+    .message.error { color: #fca5a5; }
+    .message.success { color: #86efac; }
+
+    /* Loading */
+    #loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #333;
+      border-top-color: #814ac8;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Authenticated section */
+    .auth-card {
+      background: rgba(129,74,200,0.06);
+      border: 1px solid rgba(129,74,200,0.2);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    #user-id-display {
+      font-size: 10px;
+      color: #814ac8;
+      font-weight: 600;
+      font-family: monospace;
+      margin-top: 2px;
+    }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #ccc;
+    }
+
+    .toggle-sub {
+      font-size: 10px;
+      color: #555;
+      margin-top: 1px;
+    }
+
+    /* iOS-style toggle */
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .switch input { display: none; }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #333;
+      border-radius: 20px;
+      transition: 0.25s;
+    }
+
+    .switch-slider:before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: 0.25s;
+    }
+
+    .switch input:checked + .switch-slider { background: #814ac8; }
+    .switch input:checked + .switch-slider:before { transform: translateX(16px); }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+      margin: 12px 0;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 10px 18px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-link {
+      font-size: 10px;
+      color: #444;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .footer-link:hover { color: #814ac8; }
+
+    .version {
+      font-size: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">✦</div>
+    <div class="header-text">
+      <h1>NarrativeOS</h1>
+      <p>Narrative Weapon for X</p>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div id="status-dot" class="status-dot disconnected"></div>
+    <span id="status-text">Not connected</span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- Auth Section (shown when not logged in) -->
+    <div id="auth-section">
+      <div class="section-label">Connect with Token</div>
+      <input
+        type="password"
+        id="token-input"
+        placeholder="Paste your extension token..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="btn btn-primary" id="auth-btn">Connect</button>
+      <div id="loading">
+        <div class="spinner"></div>
+        Verifying...
+      </div>
+      <div id="error-message" class="message"></div>
+      <p style="font-size:10px;color:#444;margin-top:10px;line-height:1.5;">
+        Get your token from <strong style="color:#555">NarrativeOS → Settings → Extension</strong>
+      </p>
+    </div>
+
+    <!-- Authenticated Section -->
+    <div id="authenticated-section" style="display:none;">
+
+      <div class="auth-card">
+        <div style="font-size:11px;color:#888;font-weight:600;">CONNECTED</div>
+        <div id="user-id-display">user_...</div>
+      </div>
+
+      <!-- Auto-reply toggle -->
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Auto-Reply</div>
+          <div class="toggle-sub">AI replies to viral posts</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="auto-reply-toggle">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+
+      <!-- Actions -->
+      <button class="btn btn-primary" id="generate-draft-btn">⚡ Generate Draft</button>
+      <button class="btn btn-secondary" id="settings-btn">⚙ Open Settings</button>
+
+      <div id="error-message" class="message"></div>
+
+      <div class="divider"></div>
+
+      <button class="btn btn-danger" id="logout-btn">Disconnect</button>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="footer-link" id="options-link">Options</span>
+    <span class="version">v1.0.0</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

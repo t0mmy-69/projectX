@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --primary-bg: #000000;
+  --secondary-bg: #0A0A0B;
+  --accent-purple: #814AC8;
+  --accent-glow: rgba(129, 74, 200, 0.4);
+  --text-main: #FFFFFF;
+  --text-muted: #A1A1A1;
+  --border-color: #1A1A1A;
+}
+
+body {
+  font-family: 'Figtree', sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+.glass-panel {
+  background: rgba(10, 10, 11, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.gradient-text {
+  background: linear-gradient(to bottom, #FFFFFF 0%, #A1A1A1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.purple-gradient-text {
+  background: linear-gradient(135deg, #A87FF1 0%, #814AC8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-glow {
+  position: absolute;
+  width: 1000px;
+  height: 800px;
+  background: radial-gradient(circle at center, rgba(129, 74, 200, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+  top: -300px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(60px);
+}
+
+.card-hover:hover {
+  border-color: rgba(129, 74, 200, 0.3);
+  box-shadow: 0 0 30px rgba(129, 74, 200, 0.08);
+  background: rgba(129, 74, 200, 0.02);
+}
+
+/* Scroll reveal helper */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 74, 200, 0.3);
+}

@@ -1,0 +1,195 @@
+/* NarrativeOS Extension Styles for X/Twitter */
+
+/* Narrative button styles */
+.narrative-btn {
+  padding: 6px 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.narrative-btn:hover {
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.narrative-btn:active {
+  transform: scale(0.98);
+}
+
+/* Draft modal styles */
+.narrative-draft-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.narrative-modal-content {
+  background: #0f0f11;
+  color: #e5e7eb;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #374151;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.9);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.narrative-modal-content h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.narrative-modal-content .hooks,
+.narrative-modal-content .draft {
+  background: #1f2937;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border-left: 3px solid #3b82f6;
+}
+
+.narrative-modal-content .hooks p,
+.narrative-modal-content .draft p {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.narrative-modal-content .hooks strong,
+.narrative-modal-content .draft strong {
+  color: #3b82f6;
+}
+
+.narrative-modal-content .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.narrative-modal-content button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+#inject-draft {
+  background: #3b82f6;
+  color: white;
+}
+
+#inject-draft:hover {
+  background: #2563eb;
+}
+
+#close-modal {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+#close-modal:hover {
+  background: #4b5563;
+}
+
+/* Loading animation */
+.narrative-loading {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #4b5563;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Notification styles */
+.narrative-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #1f2937;
+  color: #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 10001;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.narrative-notification.success {
+  border-left-color: #10b981;
+  color: #d1fae5;
+}
+
+.narrative-notification.error {
+  border-left-color: #ef4444;
+  color: #fee2e2;
+}
+
+/* Hide Narrative UI in certain contexts */
+.narrative-btn[data-hidden],
+.narrative-draft-modal[data-hidden] {
+  display: none;
+}
