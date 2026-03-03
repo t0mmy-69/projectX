@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 import { PageTransition } from "@/components/PageTransition";
+
+const figtree = Figtree({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700", "800"],
+    display: "swap",
+    variable: "--font-figtree",
+});
 
 export const metadata: Metadata = {
     title: {
@@ -52,7 +60,7 @@ export default function RootLayout({
                 />
                 <link rel="icon" href="/favicon.ico" />
             </head>
-            <body>
+            <body className={figtree.variable}>
                 <ToastProvider>
                     <PageTransition>{children}</PageTransition>
                 </ToastProvider>
